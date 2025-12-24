@@ -196,7 +196,9 @@ const LeaveConfirmModal = ({
         Disconnect from Grid?
       </h3>
       <p className="text-slate-400 mb-6 text-sm">
-        {inGame
+        {isHost
+          ? "WARNING: As Admin, leaving will shut down the server for all runners."
+          : inGame
           ? "Leaving now will corrupt the data stream for everyone."
           : "Closing secure connection."}
       </p>
@@ -219,7 +221,7 @@ const LeaveConfirmModal = ({
           onClick={onConfirmLeave}
           className="bg-pink-600 hover:bg-pink-500 text-white py-3 rounded font-bold transition-colors flex items-center justify-center gap-2"
         >
-          <LogOut size={18} /> Jack Out
+          <LogOut size={18} /> {isHost ? "Shut Down Server" : "Jack Out"}
         </button>
       </div>
     </div>
@@ -468,6 +470,15 @@ export default function NeonDraftGame() {
     return () => unsubscribe();
   }, []);
 
+  // --- Session Restore ---
+  useEffect(() => {
+    const savedRoomId = localStorage.getItem("neondraft_roomId");
+    if (savedRoomId) {
+      setRoomId(savedRoomId);
+      // Room sync effect will handle view switching
+    }
+  }, []);
+
   useEffect(() => {
     if (!roomId || !user) return;
     const unsub = onSnapshot(
@@ -484,6 +495,7 @@ export default function NeonDraftGame() {
           ) {
             setRoomId("");
             setView("menu");
+            localStorage.removeItem("neondraft_roomId"); // Clear session
             setError("Connection Terminated (Kicked).");
             return;
           }
@@ -505,7 +517,8 @@ export default function NeonDraftGame() {
           // If doc is deleted (Host left), return to menu
           setRoomId("");
           setView("menu");
-          setError("Server shut down by Host.");
+          localStorage.removeItem("neondraft_roomId"); // Clear session
+          setError("Server shut down by Admin.");
         }
       }
     );
@@ -557,6 +570,7 @@ export default function NeonDraftGame() {
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", newId),
         initialData
       );
+      localStorage.setItem("neondraft_roomId", newId); // Save session
       setRoomId(newId);
       setView("lobby");
     } catch (e) {
@@ -600,6 +614,7 @@ export default function NeonDraftGame() {
           }),
         });
       }
+      localStorage.setItem("neondraft_roomId", roomCodeInput); // Save session
       setRoomId(roomCodeInput);
     } catch (e) {
       setError(e.message);
@@ -619,6 +634,7 @@ export default function NeonDraftGame() {
       await updateDoc(ref, { players: updatedPlayers });
     }
 
+    localStorage.removeItem("neondraft_roomId"); // Clear session
     setRoomId("");
     setView("menu");
     setShowLeaveConfirm(false);
