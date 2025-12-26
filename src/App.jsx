@@ -15,7 +15,6 @@ import {
   deleteDoc,
   onSnapshot,
   arrayUnion,
-  increment,
 } from "firebase/firestore";
 import {
   Cpu,
@@ -24,7 +23,6 @@ import {
   Database,
   Zap,
   Layers,
-  Repeat,
   Trophy,
   LogOut,
   History,
@@ -38,13 +36,14 @@ import {
   Loader2,
   Server,
   Smartphone,
-  Shield,
-  AlertTriangle,
-  Hammer,
-  Sparkles,
-  Trash2, // Added Trash2 icon
-  Table, // For report card
-  FileBarChart, // For report card
+  Trash2,
+  Repeat,
+  Ghost,
+  Disc,
+  FileBarChart,
+  ArrowRight,
+  Clock, // Added Clock icon
+  Power, // Added Power icon
 } from "lucide-react";
 
 // --- Firebase Config ---
@@ -64,82 +63,114 @@ const db = getFirestore(app);
 const APP_ID = typeof __app_id !== "undefined" ? __app_id : "neon-draft";
 const GAME_ID = "10";
 
-// --- Game Constants ---
+// --- Game Constants & Rules ---
+
+// CARDS DEFINITION (Sushi Go Cyberpunk Reskin)
 const CARDS = {
   CACHE_1: {
     id: "CACHE_1",
-    name: "Data Cache",
+    name: "Data Cache v1",
     val: 1,
-    icon: Database,
-    color: "text-blue-400",
-    border: "border-blue-500",
-    desc: "Worth 1 TB (Point).",
+    icon: Disc,
+    color: "text-slate-400",
+    border: "border-slate-500",
+    desc: "1 TB.",
   },
   CACHE_2: {
     id: "CACHE_2",
-    name: "Encrypted Cache",
+    name: "Data Cache v2",
     val: 2,
-    icon: Database,
-    color: "text-blue-300",
-    border: "border-blue-400",
-    desc: "Worth 2 TB (Points).",
+    icon: Disc,
+    color: "text-orange-400",
+    border: "border-orange-500",
+    desc: "2 TB.",
   },
   CACHE_3: {
     id: "CACHE_3",
-    name: "Root Access",
+    name: "Data Cache v3",
     val: 3,
-    icon: Database,
-    color: "text-blue-200",
-    border: "border-blue-300",
-    desc: "Worth 3 TB (Points).",
+    icon: Disc,
+    color: "text-yellow-400",
+    border: "border-yellow-500",
+    desc: "3 TB.",
+  },
+  EXPLOIT: {
+    id: "EXPLOIT",
+    name: "Zero-Day Exploit",
+    val: 0,
+    icon: Zap,
+    color: "text-yellow-200",
+    border: "border-yellow-600",
+    desc: "Next Cache x3.",
   },
   GPU: {
     id: "GPU",
     name: "GPU Cluster",
     val: 0,
     icon: Cpu,
-    color: "text-orange-400",
-    border: "border-orange-500",
-    desc: "Pair = 5 TB. (2 GPUs = 5pts).",
+    color: "text-purple-400",
+    border: "border-purple-500",
+    desc: "Pair = 5 TB.",
+  },
+  MAINFRAME: {
+    id: "MAINFRAME",
+    name: "Mainframe Core",
+    val: 0,
+    icon: Server,
+    color: "text-green-400",
+    border: "border-green-500",
+    desc: "Set of 3 = 10 TB.",
   },
   KEY: {
     id: "KEY",
     name: "Encryption Key",
     val: 0,
     icon: Lock,
-    color: "text-green-400",
-    border: "border-green-500",
-    desc: "Set Multiplier: 1/3/6/10/15 TB.",
+    color: "text-blue-400",
+    border: "border-blue-500",
+    desc: "1/3/6/10/15 TB.",
   },
   BOTNET: {
     id: "BOTNET",
     name: "Botnet Node",
     val: 0,
     icon: Wifi,
-    color: "text-red-400",
-    border: "border-red-500",
-    desc: "Majority = 6 TB. Minority = -3 TB.",
+    color: "text-red-500",
+    border: "border-red-600",
+    desc: "Most = 6. 2nd = 3.",
   },
-  OVERCLOCK: {
-    id: "OVERCLOCK",
-    name: "Overclock",
+  PROXY: {
+    id: "PROXY",
+    name: "Proxy Server",
     val: 0,
-    icon: Zap,
-    color: "text-yellow-400",
-    border: "border-yellow-500",
-    desc: "+1 TB for every GPU you have.",
+    icon: Repeat,
+    color: "text-cyan-200",
+    border: "border-cyan-400",
+    desc: "Swap for 2 cards.",
+  },
+  BACKDOOR: {
+    id: "BACKDOOR",
+    name: "Backdoor Access",
+    val: 0,
+    icon: Ghost,
+    color: "text-pink-400",
+    border: "border-pink-500",
+    desc: "End Game: +6/-6 TB.",
   },
 };
 
-// Deck Template (Balanced for ~4-5 players)
+// DECK DISTRIBUTION (108 cards)
 const DECK_TEMPLATE = [
-  ...Array(10).fill("CACHE_1"),
-  ...Array(8).fill("CACHE_2"),
-  ...Array(4).fill("CACHE_3"),
-  ...Array(12).fill("GPU"),
-  ...Array(12).fill("KEY"),
-  ...Array(10).fill("BOTNET"),
-  ...Array(6).fill("OVERCLOCK"),
+  ...Array(14).fill("GPU"),
+  ...Array(14).fill("MAINFRAME"),
+  ...Array(14).fill("KEY"),
+  ...Array(26).fill("BOTNET"),
+  ...Array(10).fill("CACHE_2"),
+  ...Array(5).fill("CACHE_3"),
+  ...Array(5).fill("CACHE_1"),
+  ...Array(6).fill("EXPLOIT"),
+  ...Array(4).fill("PROXY"),
+  ...Array(10).fill("BACKDOOR"),
 ];
 
 // --- Helper Functions ---
@@ -228,6 +259,99 @@ const LeaveConfirmModal = ({
   </div>
 );
 
+// Round Summary Component
+const RoundSummary = ({ players, round, onNext, isHost }) => {
+  return (
+    <div className="fixed inset-0 bg-black/95 z-[150] flex items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden max-h-[90vh]">
+        <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2 tracking-wider">
+            <FileBarChart className="text-cyan-400" />
+            ROUND {round} SUMMARY
+          </h2>
+          <div className="text-sm text-slate-500 font-mono">
+            CALCULATING METRICS...
+          </div>
+        </div>
+
+        <div className="p-6 overflow-y-auto space-y-4">
+          <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
+            <div className="col-span-3">Runner</div>
+            <div className="col-span-5">Data Acquired (Ordered)</div>
+            <div className="col-span-2 text-right">R{round} TB</div>
+            <div className="col-span-2 text-right">Total TB</div>
+          </div>
+
+          {players
+            .sort((a, b) => b.score - a.score)
+            .map((p) => {
+              // Get the history entry for this round
+              const roundData = p.history.find((h) => h.round === round);
+              const roundCards = roundData ? roundData.cards : [];
+              const roundScore = roundData ? roundData.score : 0;
+
+              return (
+                <div
+                  key={p.id}
+                  className="grid grid-cols-12 gap-4 items-center bg-slate-800/30 p-3 rounded-lg border border-slate-700/50"
+                >
+                  <div className="col-span-3 font-bold text-white truncate flex items-center gap-2">
+                    <User size={14} className="text-slate-400" />
+                    {p.name}
+                  </div>
+                  <div className="col-span-5 flex flex-wrap gap-1">
+                    {roundCards.map((cId, i) => {
+                      const info = CARDS[cId];
+                      const Icon = info.icon;
+                      return (
+                        <div
+                          key={i}
+                          className={`w-6 h-6 flex items-center justify-center rounded bg-slate-900 border ${info.border} ${info.color}`}
+                          title={info.name}
+                        >
+                          <Icon size={12} />
+                        </div>
+                      );
+                    })}
+                    {roundCards.length === 0 && (
+                      <span className="text-slate-600 text-xs italic">
+                        No Data
+                      </span>
+                    )}
+                  </div>
+                  <div className="col-span-2 text-right font-mono text-cyan-300 font-bold">
+                    +{roundScore}
+                  </div>
+                  <div className="col-span-2 text-right font-mono text-white font-bold text-lg">
+                    {p.score}
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+
+        <div className="p-6 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+          {isHost ? (
+            <button
+              onClick={onNext}
+              className="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-cyan-900/20"
+            >
+              {round >= 3 ? "Initialize Final Scoring" : "Start Next Round"}{" "}
+              <ArrowRight size={18} />
+            </button>
+          ) : (
+            <div className="text-slate-400 italic animate-pulse flex items-center gap-2">
+              <Loader2 size={16} className="animate-spin" /> Waiting for Host to
+              proceed...
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Log Viewer
 const LogViewer = ({ logs, onClose }) => (
   <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-0 md:p-4">
     <div className="bg-slate-900 w-full md:max-w-md h-full md:h-[70vh] rounded-none md:rounded-xl flex flex-col border-none md:border border-slate-700 shadow-2xl">
@@ -291,41 +415,46 @@ const RulesModal = ({ onClose }) => (
             <h3 className="text-xl font-bold text-cyan-400 mb-2">The Draft</h3>
             <ul className="list-disc pl-5 space-y-2 text-sm">
               <li>
-                <strong>Select:</strong> Everyone picks 1 card from their hand
-                simultaneously.
+                <strong>Select:</strong> Pick 1 card to keep (or 2 if using
+                Proxy).
               </li>
               <li>
-                <strong>Reveal:</strong> Kept cards are added to your "Rig"
-                (Score Pile).
+                <strong>Reveal:</strong> Add to your Rig.
               </li>
               <li>
-                <strong>Pass:</strong> The remaining hands are passed to the
-                next player.
+                <strong>Pass:</strong> Hand remaining cards to the left.
               </li>
-              <li>Repeat until all cards are gone. 3 Rounds total.</li>
+              <li>3 Rounds total. Highest TB (Score) wins.</li>
             </ul>
           </div>
           <div className="bg-purple-900/10 p-4 rounded-lg border border-purple-500/20">
             <h3 className="text-xl font-bold text-purple-400 mb-2">
-              Scoring (TB)
+              Scoring Protocols
             </h3>
             <ul className="list-disc pl-5 space-y-2 text-sm">
               <li>
-                <strong>Cache:</strong> Flat points (1, 2, or 3).
+                <strong>GPU:</strong> Pair (2 cards) = 5 pts.
               </li>
               <li>
-                <strong>GPU:</strong> Pairs are worth 5 pts. (1 alone = 0).
+                <strong>Mainframe:</strong> Set (3 cards) = 10 pts.
               </li>
               <li>
-                <strong>Keys:</strong> Set collection. 1=1, 2=3, 3=6, 4=10, 5=15
+                <strong>Key:</strong> 1/3/6/10/15 pts for 1/2/3/4/5+ cards.
+              </li>
+              <li>
+                <strong>Exploit:</strong> Triples the <em>very next</em> Cache
+                card played. Unused Exploits = 0 pts.
+              </li>
+              <li>
+                <strong>Botnet:</strong> Round End. Most = 6 pts. 2nd Most = 3
                 pts.
               </li>
               <li>
-                <strong>Botnet:</strong> Player with MOST = 6 pts. FEWEST = -3
+                <strong>Backdoor:</strong> Game End. Most = 6 pts. Fewest = -6
                 pts.
               </li>
               <li>
-                <strong>Overclock:</strong> +1 pt for every GPU you have.
+                <strong>Proxy:</strong> Use on turn to swap for 2 cards.
               </li>
             </ul>
           </div>
@@ -370,23 +499,25 @@ const FeedbackOverlay = ({ type, message, subtext, icon: Icon }) => (
 );
 
 // Card Component
-const Card = ({ typeId, onClick, selected, small }) => {
+const Card = ({ typeId, onClick, selected, small, disabled }) => {
   const info = CARDS[typeId];
   if (!info) return null;
   const Icon = info.icon;
 
   return (
     <div
-      onClick={onClick}
+      onClick={!disabled ? onClick : undefined}
       className={`
         relative bg-slate-900 rounded-lg border-2 transition-all flex flex-col items-center justify-between
         ${info.border}
         ${
           selected
             ? "ring-4 ring-cyan-400 -translate-y-4 shadow-[0_0_20px_rgba(34,211,238,0.5)] z-20"
-            : "hover:-translate-y-1 hover:shadow-lg"
+            : !disabled
+            ? "hover:-translate-y-1 hover:shadow-lg"
+            : "opacity-50 cursor-not-allowed"
         }
-        ${onClick ? "cursor-pointer" : ""}
+        ${onClick && !disabled ? "cursor-pointer" : ""}
         ${small ? "w-16 h-24 p-1" : "w-24 h-36 md:w-32 md:h-48 p-2"}
       `}
     >
@@ -447,14 +578,15 @@ export default function NeonDraftGame() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [isMaintenance, setIsMaintenance] = useState(false);
-
   // UI States
   const [showRules, setShowRules] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [selectedCardIdx, setSelectedCardIdx] = useState(null);
+
+  // Draft Selection
+  const [selectedCardIndices, setSelectedCardIndices] = useState([]);
+  const [isUsingProxy, setIsUsingProxy] = useState(false);
 
   // --- Auth & Listener ---
   useEffect(() => {
@@ -475,7 +607,6 @@ export default function NeonDraftGame() {
     const savedRoomId = localStorage.getItem("neondraft_roomId");
     if (savedRoomId) {
       setRoomId(savedRoomId);
-      // Room sync effect will handle view switching
     }
   }, []);
 
@@ -486,8 +617,6 @@ export default function NeonDraftGame() {
       (snap) => {
         if (snap.exists()) {
           const data = snap.data();
-
-          // Kick Check: If player is not in the list, they have been removed
           if (
             !data.players ||
             !Array.isArray(data.players) ||
@@ -495,7 +624,7 @@ export default function NeonDraftGame() {
           ) {
             setRoomId("");
             setView("menu");
-            localStorage.removeItem("neondraft_roomId"); // Clear session
+            localStorage.removeItem("neondraft_roomId");
             setError("Connection Terminated (Kicked).");
             return;
           }
@@ -514,25 +643,15 @@ export default function NeonDraftGame() {
             setTimeout(() => setFeedback(null), 3000);
           }
         } else {
-          // If doc is deleted (Host left), return to menu
           setRoomId("");
           setView("menu");
-          localStorage.removeItem("neondraft_roomId"); // Clear session
+          localStorage.removeItem("neondraft_roomId");
           setError("Server shut down by Admin.");
         }
       }
     );
     return () => unsub();
   }, [roomId, user, gameState?.feedbackTrigger?.id]);
-
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, "game_hub_settings", "config"), (doc) => {
-      if (doc.exists() && doc.data()[GAME_ID]?.maintenance)
-        setIsMaintenance(true);
-      else setIsMaintenance(false);
-    });
-    return () => unsub();
-  }, []);
 
   // --- Game Actions ---
 
@@ -552,15 +671,15 @@ export default function NeonDraftGame() {
           hand: [],
           keptCards: [],
           score: 0,
-          stats: { cache: 0, gpu: 0, key: 0, botnet: 0, overclock: 0 },
           ready: true,
-          selection: null,
-          history: [], // Keep track of past rounds
+          selection: [],
+          history: [],
+          backdoorCount: 0,
         },
       ],
       logs: [],
       round: 1,
-      turnState: "IDLE", // SELECTING, RESOLVING
+      turnState: "IDLE",
       feedbackTrigger: null,
       winner: null,
     };
@@ -570,7 +689,7 @@ export default function NeonDraftGame() {
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", newId),
         initialData
       );
-      localStorage.setItem("neondraft_roomId", newId); // Save session
+      localStorage.setItem("neondraft_roomId", newId);
       setRoomId(newId);
       setView("lobby");
     } catch (e) {
@@ -607,14 +726,14 @@ export default function NeonDraftGame() {
             hand: [],
             keptCards: [],
             score: 0,
-            stats: { cache: 0, gpu: 0, key: 0, botnet: 0, overclock: 0 },
             ready: true,
-            selection: null,
+            selection: [],
             history: [],
+            backdoorCount: 0,
           }),
         });
       }
-      localStorage.setItem("neondraft_roomId", roomCodeInput); // Save session
+      localStorage.setItem("neondraft_roomId", roomCodeInput);
       setRoomId(roomCodeInput);
     } catch (e) {
       setError(e.message);
@@ -626,7 +745,6 @@ export default function NeonDraftGame() {
     if (!roomId) return;
     const ref = doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId);
 
-    // --- HOST LEAVE LOGIC: Delete room ---
     if (gameState.hostId === user.uid) {
       await deleteDoc(ref);
     } else {
@@ -634,27 +752,23 @@ export default function NeonDraftGame() {
       await updateDoc(ref, { players: updatedPlayers });
     }
 
-    localStorage.removeItem("neondraft_roomId"); // Clear session
+    localStorage.removeItem("neondraft_roomId");
     setRoomId("");
     setView("menu");
     setShowLeaveConfirm(false);
   };
 
-  // --- KICK FUNCTION ---
   const kickPlayer = async (playerIdToRemove) => {
     if (gameState.hostId !== user.uid) return;
-
     const newPlayers = gameState.players.filter(
       (p) => p.id !== playerIdToRemove
     );
-
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
       { players: newPlayers }
     );
   };
 
-  // --- READY TOGGLE FUNCTION ---
   const toggleReady = async () => {
     if (!gameState) return;
     const updatedPlayers = gameState.players.map((p) =>
@@ -671,20 +785,29 @@ export default function NeonDraftGame() {
   const startGame = async () => {
     if (gameState.players.length < 2) return setError("Need 2+ Runners.");
 
-    // Create big deck
-    let deck = shuffle([...DECK_TEMPLATE, ...DECK_TEMPLATE]);
+    let deck = shuffle([...DECK_TEMPLATE]);
+
+    const handSize =
+      gameState.players.length === 2
+        ? 10
+        : gameState.players.length === 3
+        ? 9
+        : gameState.players.length === 4
+        ? 8
+        : 7;
+
     const players = gameState.players.map((p) => {
       const hand = [];
-      for (let i = 0; i < 7; i++) hand.push(deck.pop());
+      for (let i = 0; i < handSize; i++) hand.push(deck.pop());
       return {
         ...p,
         hand,
         keptCards: [],
         score: 0,
-        stats: { cache: 0, gpu: 0, key: 0, botnet: 0, overclock: 0 },
-        history: [], // Clear history for new game
-        selection: null,
-        ready: false, // Reset ready
+        backdoorCount: 0,
+        history: [],
+        selection: [],
+        ready: false,
       };
     });
 
@@ -707,18 +830,38 @@ export default function NeonDraftGame() {
     );
   };
 
-  const selectCard = async (cardIdx) => {
-    setSelectedCardIdx(cardIdx);
+  // --- Selection Logic ---
+  const toggleCardSelection = (cardIdx) => {
+    const maxSelect = isUsingProxy ? 2 : 1;
+
+    setSelectedCardIndices((prev) => {
+      if (prev.includes(cardIdx)) {
+        return prev.filter((i) => i !== cardIdx);
+      } else {
+        if (prev.length >= maxSelect) {
+          if (maxSelect === 1) return [cardIdx];
+          return [...prev.slice(1), cardIdx];
+        }
+        return [...prev, cardIdx];
+      }
+    });
   };
 
   const confirmSelection = async () => {
-    if (selectedCardIdx === null) return;
+    if (selectedCardIndices.length === 0) return;
+    if (isUsingProxy && selectedCardIndices.length !== 2) return;
 
     const updatedPlayers = gameState.players.map((p) =>
-      p.id === user.uid ? { ...p, selection: selectedCardIdx } : p
+      p.id === user.uid
+        ? {
+            ...p,
+            selection: selectedCardIndices,
+            usingProxy: isUsingProxy,
+          }
+        : p
     );
 
-    const allSelected = updatedPlayers.every((p) => p.selection !== null);
+    const allSelected = updatedPlayers.every((p) => p.selection.length > 0);
 
     if (allSelected) {
       await resolveTurn(updatedPlayers);
@@ -730,37 +873,48 @@ export default function NeonDraftGame() {
         }
       );
     }
-    setSelectedCardIdx(null);
+    setSelectedCardIndices([]);
+    setIsUsingProxy(false);
   };
 
-  // Improved calculation to return full breakdown
+  // --- SCORING ENGINE ---
   const calculateScoreBreakdown = (keptCards) => {
-    let cache = 0;
+    let cacheScore = 0;
+    let exploitStack = 0; // Tracks active "open" exploits
     let gpuCount = 0;
+    let mainframeCount = 0;
     let keyCount = 0;
-    let overclockCount = 0;
     let botnetCount = 0;
 
+    // Iterate sequentially to handle Exploit -> Cache logic
     keptCards.forEach((cId) => {
-      const c = CARDS[cId];
-      if (cId.startsWith("CACHE")) cache += c.val;
+      // 1. Exploit / Cache Logic (Sequential)
+      if (cId === "EXPLOIT") {
+        exploitStack++;
+      } else if (cId.startsWith("CACHE")) {
+        const val = CARDS[cId].val;
+        if (exploitStack > 0) {
+          cacheScore += val * 3; // Tripled!
+          exploitStack--; // Consumed
+        } else {
+          cacheScore += val; // Normal
+        }
+      }
+
+      // 2. Count others
       if (cId === "GPU") gpuCount++;
+      if (cId === "MAINFRAME") mainframeCount++;
       if (cId === "KEY") keyCount++;
-      if (cId === "OVERCLOCK") overclockCount++;
       if (cId === "BOTNET") botnetCount++;
     });
 
-    const gpuPoints = Math.floor(gpuCount / 2) * 5;
-    const keyScores = [0, 1, 3, 6, 10, 15, 21, 28];
-    const keyPoints = keyScores[Math.min(keyCount, 7)];
-    const overclockPoints = overclockCount * gpuCount;
+    const gpuScore = Math.floor(gpuCount / 2) * 5;
+    const mainframeScore = Math.floor(mainframeCount / 3) * 10;
+    const keyTable = [0, 1, 3, 6, 10, 15];
+    const keyScore = keyTable[Math.min(keyCount, 5)];
 
     return {
-      total: cache + gpuPoints + keyPoints + overclockPoints, // Base score before botnet
-      cache,
-      gpu: gpuPoints,
-      key: keyPoints,
-      overclock: overclockPoints,
+      total: cacheScore + gpuScore + mainframeScore + keyScore,
       botnetCount,
     };
   };
@@ -768,120 +922,211 @@ export default function NeonDraftGame() {
   const resolveTurn = async (currentPlayers) => {
     const logs = [];
     let nextState = "SELECTING";
-    let nextRound = gameState.round;
-    let feedback = null;
-    let deck = [...(gameState.deck || [])];
-    let status = "playing";
-    let winner = null;
+    let finalPlayers = [...currentPlayers];
 
-    // 1. Reveal & Move to Kept
-    const players = currentPlayers.map((p) => {
-      const card = p.hand[p.selection];
-      const newHand = p.hand.filter((_, i) => i !== p.selection);
+    // 1. Resolve Proxy Swaps & Move to Kept
+    finalPlayers = finalPlayers.map((p) => {
+      const selectedCards = p.selection.map((idx) => p.hand[idx]);
+      let newHand = p.hand.filter((_, i) => !p.selection.includes(i));
+      let newKept = [...p.keptCards];
+
+      if (p.usingProxy) {
+        const proxyIndex = newKept.indexOf("PROXY");
+        if (proxyIndex > -1) {
+          newKept.splice(proxyIndex, 1);
+          newHand.push("PROXY");
+          newKept.push(...selectedCards);
+        } else {
+          newKept.push(selectedCards[0]);
+          if (selectedCards.length > 1) newHand.push(selectedCards[1]);
+        }
+      } else {
+        newKept.push(...selectedCards);
+      }
+
       return {
         ...p,
         hand: newHand,
-        keptCards: [...p.keptCards, card],
-        selection: null,
+        keptCards: newKept,
+        selection: [],
+        usingProxy: false,
       };
     });
 
     logs.push({
       id: Date.now().toString(),
-      text: "Data Fragments acquired. Passing hands...",
+      text: "Data transfer complete. Hands rotating...",
       type: "neutral",
     });
 
-    // 2. Rotate Hands (Pass Left)
-    const rotatedHands = players.map(
-      (_, i) => players[(i + 1) % players.length].hand
+    // 2. Rotate Hands
+    const rotatedHands = finalPlayers.map(
+      (_, i) => finalPlayers[(i + 1) % finalPlayers.length].hand
     );
-    players.forEach((p, i) => (p.hand = rotatedHands[i]));
+    finalPlayers.forEach((p, i) => (p.hand = rotatedHands[i]));
 
     // 3. Check Round End
-    if (players[0].hand.length === 0) {
+    if (finalPlayers[0].hand.length === 0) {
       logs.push({
         id: Date.now() + 1,
-        text: `Round ${gameState.round} Complete. Calculating Metrics...`,
+        text: `Round ${gameState.round} Complete. Showing Summary.`,
         type: "success",
       });
 
-      // SCORING LOGIC
-      const breakdowns = players.map((p) =>
+      // --- ROUND SCORING ---
+      const breakdowns = finalPlayers.map((p) =>
         calculateScoreBreakdown(p.keptCards)
       );
 
-      // Resolve Botnets
-      const maxBots = Math.max(...breakdowns.map((b) => b.botnetCount));
-      const minBots = Math.min(...breakdowns.map((b) => b.botnetCount));
+      // Botnet (Maki) Scoring
+      const botnetCounts = breakdowns.map((b) => b.botnetCount);
+      const uniqueCounts = [...new Set(botnetCounts)]
+        .filter((c) => c > 0)
+        .sort((a, b) => b - a);
+      const firstPlaceCount = uniqueCounts[0] || 0;
+      const secondPlaceCount = uniqueCounts[1] || 0;
 
-      players.forEach((p, i) => {
+      const firstPlaceWinners = finalPlayers.filter(
+        (_, i) =>
+          breakdowns[i].botnetCount === firstPlaceCount && firstPlaceCount > 0
+      );
+      const secondPlaceWinners = finalPlayers.filter(
+        (_, i) =>
+          breakdowns[i].botnetCount === secondPlaceCount && secondPlaceCount > 0
+      );
+
+      const firstPoints = Math.floor(6 / (firstPlaceWinners.length || 1));
+      const secondPoints = Math.floor(3 / (secondPlaceWinners.length || 1));
+
+      finalPlayers.forEach((p, i) => {
         const bd = breakdowns[i];
-        let botnetPoints = 0;
+        let botnetScore = 0;
 
-        if (bd.botnetCount === maxBots && maxBots > 0) botnetPoints += 6;
-        if (bd.botnetCount === minBots && players.length > 2) botnetPoints -= 3;
+        if (bd.botnetCount === firstPlaceCount && firstPlaceCount > 0) {
+          botnetScore = firstPoints;
+        } else if (
+          bd.botnetCount === secondPlaceCount &&
+          secondPlaceCount > 0 &&
+          firstPlaceWinners.length === 1
+        ) {
+          botnetScore = secondPoints;
+        }
 
-        const roundTotal = bd.total + botnetPoints;
+        // Handle Backdoors (Puddings) - Move to persistent storage
+        const roundBackdoors = p.keptCards.filter(
+          (c) => c === "BACKDOOR"
+        ).length;
+        p.backdoorCount += roundBackdoors;
 
-        // Save round history
+        const roundTotal = bd.total + botnetScore;
+
         p.history.push({
           round: gameState.round,
-          cards: p.keptCards,
+          cards: [...p.keptCards], // Snapshot
           score: roundTotal,
         });
-
-        // Accumulate Stats
-        p.stats.cache += bd.cache;
-        p.stats.gpu += bd.gpu;
-        p.stats.key += bd.key;
-        p.stats.overclock += bd.overclock;
-        p.stats.botnet += botnetPoints;
-
         p.score += roundTotal;
-        p.keptCards = []; // Clear for next round
+        // Don't clear keptCards yet, so summary can see them if needed (though we use history now)
       });
 
-      if (gameState.round >= 3) {
-        status = "finished";
-        const sorted = [...players].sort((a, b) => b.score - a.score);
-        winner = sorted[0].name;
-        feedback = {
-          id: Date.now(),
-          type: "success",
-          message: "SYSTEM HACKED",
-          subtext: `${winner} Dominates the Grid`,
-        };
-      } else {
-        nextRound++;
-        players.forEach((p) => {
-          const newHand = [];
-          for (let k = 0; k < 7; k++)
-            if (deck.length > 0) newHand.push(deck.pop());
-          p.hand = newHand;
-        });
-        feedback = {
-          id: Date.now(),
-          type: "info",
-          message: `ROUND ${nextRound}`,
-          subtext: "New Data Available",
-        };
-      }
+      nextState = "ROUND_SUMMARY"; // Pause game
     }
 
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
       {
-        players,
+        players: finalPlayers,
         turnState: nextState,
-        round: nextRound,
         logs: arrayUnion(...logs),
-        feedbackTrigger: feedback,
-        deck,
-        status,
-        winner,
       }
     );
+  };
+
+  // --- Start Next Round / End Game ---
+  const proceedToNextRound = async () => {
+    if (gameState.hostId !== user.uid) return;
+
+    if (gameState.round >= 3) {
+      // Calculate Game End Scores
+      const players = [...gameState.players];
+      const backdoorCounts = players.map((p) => p.backdoorCount);
+      const maxBackdoor = Math.max(...backdoorCounts);
+      const minBackdoor = Math.min(...backdoorCounts);
+
+      const maxWinners = players.filter((p) => p.backdoorCount === maxBackdoor);
+      const minLosers = players.filter((p) => p.backdoorCount === minBackdoor);
+
+      const maxPoints = Math.floor(6 / maxWinners.length);
+      const minPoints =
+        players.length > 2 ? Math.floor(-6 / minLosers.length) : 0;
+
+      players.forEach((p) => {
+        let puddingScore = 0;
+        if (p.backdoorCount === maxBackdoor) puddingScore = maxPoints;
+        else if (p.backdoorCount === minBackdoor) puddingScore = minPoints;
+        p.score += puddingScore;
+        p.backdoorScore = puddingScore; // Save for display
+        p.ready = false; // RESET READY STATUS FOR GAME OVER SCREEN
+      });
+
+      const sorted = [...players].sort((a, b) => b.score - a.score);
+      const winner = sorted[0].name;
+
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        {
+          players,
+          status: "finished",
+          turnState: "GAME_OVER",
+          winner,
+          feedbackTrigger: {
+            id: Date.now(),
+            type: "success",
+            message: "SYSTEM HACKED",
+            subtext: `${winner} Dominates the Grid`,
+          },
+        }
+      );
+    } else {
+      // Deal Next Round
+      const nextRound = gameState.round + 1;
+      let deck = [...gameState.deck];
+      const handSize =
+        gameState.players.length === 2
+          ? 10
+          : gameState.players.length === 3
+          ? 9
+          : gameState.players.length === 4
+          ? 8
+          : 7;
+
+      const players = gameState.players.map((p) => {
+        const newHand = [];
+        for (let k = 0; k < handSize; k++)
+          if (deck.length > 0) newHand.push(deck.pop());
+        return {
+          ...p,
+          hand: newHand,
+          keptCards: [], // Clear now
+        };
+      });
+
+      await updateDoc(
+        doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
+        {
+          players,
+          deck,
+          round: nextRound,
+          turnState: "SELECTING",
+          feedbackTrigger: {
+            id: Date.now(),
+            type: "info",
+            message: `ROUND ${nextRound}`,
+            subtext: "New Data Available",
+          },
+        }
+      );
+    }
   };
 
   const returnToLobby = async () => {
@@ -890,8 +1135,8 @@ export default function NeonDraftGame() {
       hand: [],
       keptCards: [],
       score: 0,
-      stats: { cache: 0, gpu: 0, key: 0, botnet: 0, overclock: 0 },
-      selection: null,
+      backdoorCount: 0,
+      selection: [],
       history: [],
       ready: true,
     }));
@@ -910,38 +1155,7 @@ export default function NeonDraftGame() {
 
   const me = gameState?.players.find((p) => p.id === user?.uid);
 
-  if (isMaintenance) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-white p-4 text-center">
-        <div className="bg-orange-500/10 p-8 rounded-2xl border border-orange-500/30">
-          <Hammer
-            size={64}
-            className="text-orange-500 mx-auto mb-4 animate-bounce"
-          />
-          <h1 className="text-3xl font-bold mb-2">Under Maintenance</h1>
-          <p className="text-gray-400">
-            Grid Offline. Rerouting power to main servers.
-          </p>
-        </div>
-        {/* Add Spacing Between Boxes */}
-        <div className="h-8"></div>
-
-        {/* Clickable Second Card */}
-        <a href="https://rawfidkshuvo.github.io/gamehub/">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <div className="text-center pb-12 animate-pulse">
-              <div className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900/50 rounded-full border border-indigo-500/20 text-indigo-300 font-bold tracking-widest text-sm uppercase backdrop-blur-sm">
-                <Sparkles size={16} /> Visit Gamehub...Try our other releases...{" "}
-                <Sparkles size={16} />
-              </div>
-            </div>
-          </div>
-        </a>
-      </div>
-    );
-  }
-
-  // --- Views ---
+  // --- Render ---
 
   if (!user)
     return (
@@ -1083,7 +1297,6 @@ export default function NeonDraftGame() {
                     <span className="text-green-500 text-xs flex items-center gap-1">
                       <CheckCircle size={12} /> Online
                     </span>
-                    {/* Trash Icon for Kick */}
                     {isHost && p.id !== user.uid && (
                       <button
                         onClick={() => kickPlayer(p.id)}
@@ -1130,9 +1343,14 @@ export default function NeonDraftGame() {
 
   if (view === "game" && gameState) {
     const isSelecting = gameState.turnState === "SELECTING";
-    const hasSelected = me?.selection !== null;
+    const isSummary = gameState.turnState === "ROUND_SUMMARY";
+    const hasSelected = me?.selection.length > 0;
     const waitingForOthers = isSelecting && hasSelected;
     const opponents = gameState.players.filter((p) => p.id !== user.uid);
+    const hasProxy = me.keptCards.includes("PROXY");
+
+    // Game Over Ready Check
+    const allPlayersReady = gameState.players.every((p) => p.ready);
 
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col relative overflow-hidden font-sans">
@@ -1161,6 +1379,14 @@ export default function NeonDraftGame() {
               setShowLeaveConfirm(false);
             }}
             inGame={true}
+          />
+        )}
+        {isSummary && (
+          <RoundSummary
+            players={gameState.players}
+            round={gameState.round}
+            isHost={gameState.hostId === user.uid}
+            onNext={proceedToNextRound}
           />
         )}
 
@@ -1198,7 +1424,7 @@ export default function NeonDraftGame() {
 
         {/* Game Content */}
         <div className="flex-1 p-4 flex flex-col items-center relative z-10 max-w-7xl mx-auto w-full gap-4">
-          {/* Opponent Rigs (Top) - Increased Size */}
+          {/* Opponents */}
           <div className="w-full flex gap-2 overflow-x-auto pb-2 justify-start md:justify-center">
             {opponents.map((p) => (
               <div
@@ -1221,7 +1447,7 @@ export default function NeonDraftGame() {
                     ></div>
                   ))}
                 </div>
-                {p.selection !== null ? (
+                {p.selection.length > 0 ? (
                   <div className="text-[10px] text-green-400 text-center font-bold flex items-center justify-center gap-1">
                     <CheckCircle size={10} /> Ready
                   </div>
@@ -1230,7 +1456,7 @@ export default function NeonDraftGame() {
                     Thinking...
                   </div>
                 )}
-                {/* Larger Kept Cards Preview */}
+                {/* Mini Rig Preview */}
                 <div className="flex flex-wrap gap-1 mt-1 justify-center">
                   {p.keptCards.map((c, i) => {
                     const info = CARDS[c];
@@ -1238,24 +1464,39 @@ export default function NeonDraftGame() {
                     return (
                       <div
                         key={i}
-                        className={`w-6 h-6 rounded-md border border-slate-600 flex items-center justify-center ${info?.color
-                          .replace("text", "bg")
-                          .replace("400", "900")} bg-opacity-30`}
+                        className={`w-6 h-6 rounded-md border border-slate-600 flex items-center justify-center ${
+                          info?.color
+                            ? info.color
+                                .replace("text", "bg")
+                                .replace("400", "900")
+                            : "bg-slate-800"
+                        } bg-opacity-30`}
                       >
                         <Icon size={12} className={info?.color} />
                       </div>
                     );
                   })}
+                  {p.backdoorCount > 0 && (
+                    <div className="w-6 h-6 rounded-md border border-pink-500 bg-pink-900/30 flex items-center justify-center relative">
+                      <Ghost size={12} className="text-pink-400" />
+                      <span className="text-[8px] absolute -top-1 -right-1 bg-black text-white px-0.5 rounded-full border border-pink-500">
+                        {p.backdoorCount}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* My Rig (Middle) */}
-          <div className="flex-1 w-full bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-800 p-4 flex flex-col items-center">
-            <div className="text-xs text-slate-500 uppercase tracking-widest mb-2 w-full text-center border-b border-slate-800 pb-2">
-              My Data Rig -{" "}
+          {/* My Rig */}
+          <div className="flex-1 w-full bg-slate-900/50 rounded-2xl border-2 border-dashed border-slate-800 p-4 flex flex-col items-center min-h-[200px]">
+            <div className="text-xs text-slate-500 uppercase tracking-widest mb-2 w-full text-center border-b border-slate-800 pb-2 flex justify-between px-4">
+              <span>My Rig</span>
               <span className="text-yellow-400 font-bold">{me.score} TB</span>
+              <span className="text-pink-400 flex items-center gap-1">
+                <Ghost size={10} /> {me.backdoorCount}
+              </span>
             </div>
             <div className="flex flex-wrap gap-2 justify-center content-start h-full overflow-y-auto w-full">
               {me.keptCards.length === 0 && (
@@ -1269,130 +1510,159 @@ export default function NeonDraftGame() {
             </div>
           </div>
 
-          {/* Hand Selection (Bottom) */}
+          {/* Hand Selection */}
           <div
             className={`w-full max-w-4xl bg-slate-900/95 p-4 rounded-t-3xl border-t border-cyan-500/30 backdrop-blur-md mt-auto shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-20 transition-all ${
               waitingForOthers ? "translate-y-4 opacity-90" : ""
             }`}
           >
             {gameState.status === "finished" ? (
-              <div className="text-center py-6 w-full">
+              <div className="text-center py-6 w-full flex flex-col items-center">
                 <h3 className="text-4xl font-black text-cyan-400 mb-2">
                   {gameState.winner} Wins!
                 </h3>
                 <p className="text-slate-400 mb-6">Mission Debriefing</p>
 
-                {/* --- VISUAL REPORT CARD --- */}
-                <div className="w-full overflow-x-auto mb-8 px-2">
-                  <div className="flex flex-col gap-4">
-                    {gameState.players
-                      .sort((a, b) => b.score - a.score)
-                      .map((p) => {
-                        // Aggregate cards for this player across all history
-                        const allCards = p.history
-                          ? p.history.flatMap((h) => h.cards)
-                          : [];
-                        // Group by type for cleaner display
-                        const cardCounts = allCards.reduce((acc, cId) => {
-                          acc[cId] = (acc[cId] || 0) + 1;
-                          return acc;
-                        }, {});
+                {/* Detailed Scoreboard */}
+                <div className="w-full overflow-x-auto mb-6">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="text-xs text-slate-500 uppercase border-b border-slate-700">
+                        <th className="p-3">Runner</th>
+                        <th className="p-3 text-center">R1</th>
+                        <th className="p-3 text-center">R2</th>
+                        <th className="p-3 text-center">R3</th>
+                        <th className="p-3 text-center text-pink-400">
+                          Backdoor
+                        </th>
+                        <th className="p-3 text-right text-cyan-400">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {gameState.players
+                        .sort((a, b) => b.score - a.score)
+                        .map((p) => {
+                          const r1 =
+                            p.history.find((h) => h.round === 1)?.score || 0;
+                          const r2 =
+                            p.history.find((h) => h.round === 2)?.score || 0;
+                          const r3 =
+                            p.history.find((h) => h.round === 3)?.score || 0;
+                          const bdBonus = p.backdoorScore || 0;
 
-                        return (
-                          <div
-                            key={p.id}
-                            className={`bg-slate-800/50 rounded-xl p-3 border ${
-                              p.id === user.uid
-                                ? "border-cyan-500/50 bg-cyan-900/20"
-                                : "border-slate-700"
-                            }`}
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-bold text-white flex items-center gap-2">
-                                {p.name} {p.ready && "✅"}
-                              </span>
-                              <span className="text-xl font-black text-cyan-400">
-                                {p.score} TB
-                              </span>
-                            </div>
-                            {/* Card Visuals */}
-                            <div className="flex flex-wrap gap-2">
-                              {Object.entries(cardCounts).map(
-                                ([cId, count]) => {
-                                  const info = CARDS[cId];
-                                  const Icon = info.icon;
-                                  return (
-                                    <div
-                                      key={cId}
-                                      className={`flex items-center gap-1 px-2 py-1 rounded bg-slate-900 border ${info.border}`}
-                                    >
-                                      <Icon size={12} className={info.color} />
-                                      <span
-                                        className={`text-xs font-bold ${info.color}`}
-                                      >
-                                        x{count}
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                          return (
+                            <tr
+                              key={p.id}
+                              className="border-b border-slate-800 hover:bg-slate-800/30"
+                            >
+                              <td className="p-3 font-bold flex items-center gap-2">
+                                {p.name}
+                                {p.backdoorCount > 0 && (
+                                  <span className="text-[10px] text-pink-500 bg-pink-900/20 px-1 rounded flex items-center gap-0.5">
+                                    <Ghost size={8} /> {p.backdoorCount}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="p-3 text-center text-slate-400">
+                                {r1}
+                              </td>
+                              <td className="p-3 text-center text-slate-400">
+                                {r2}
+                              </td>
+                              <td className="p-3 text-center text-slate-400">
+                                {r3}
+                              </td>
+                              <td
+                                className={`p-3 text-center font-bold ${
+                                  bdBonus > 0
+                                    ? "text-green-400"
+                                    : bdBonus < 0
+                                    ? "text-red-400"
+                                    : "text-slate-600"
+                                }`}
+                              >
+                                {bdBonus > 0 ? "+" : ""}
+                                {bdBonus}
+                              </td>
+                              <td className="p-3 text-right font-black text-cyan-400 text-lg">
+                                {p.score}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
                 </div>
 
-                {/* Host Controls */}
-                {gameState.hostId === user.uid ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="flex gap-3 justify-center">
-                      <button
-                        onClick={startGame}
-                        disabled={!gameState.players.every((p) => p.ready)}
-                        className="bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-xl font-bold text-white flex gap-2 items-center"
+                {/* --- READY CHECK SECTION --- */}
+                <div className="w-full max-w-md bg-slate-800/50 rounded-xl p-4 mb-6 border border-slate-700">
+                  <h4 className="text-slate-400 text-xs uppercase tracking-widest mb-3 border-b border-slate-700 pb-2">
+                    System Check
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    {gameState.players.map((p) => (
+                      <div
+                        key={p.id}
+                        className={`flex items-center justify-between p-2 rounded text-sm ${
+                          p.ready
+                            ? "bg-green-900/20 border border-green-500/30 text-green-300"
+                            : "bg-slate-900 border border-slate-700 text-slate-500"
+                        }`}
                       >
-                        <RotateCcw size={18} /> Restart
-                      </button>
-                      <button
-                        onClick={returnToLobby}
-                        disabled={!gameState.players.every((p) => p.ready)}
-                        className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-xl font-bold text-white flex gap-2 items-center"
-                      >
-                        <Home size={18} /> Lobby
-                      </button>
-                    </div>
-                    {!gameState.players.every((p) => p.ready) && (
-                      <span className="text-xs text-slate-500 animate-pulse">
-                        Waiting for all runners to mark ready...
-                      </span>
-                    )}
-                    {/* Host Ready Toggle */}
-                    {!me.ready && (
-                      <button
-                        onClick={toggleReady}
-                        className="text-cyan-400 text-sm hover:text-cyan-300 underline"
-                      >
-                        Mark Self Ready
-                      </button>
-                    )}
+                        <span className="truncate">{p.name}</span>
+                        {p.ready ? (
+                          <CheckCircle size={14} />
+                        ) : (
+                          <Clock size={14} className="animate-pulse" />
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  /* Guest Controls */
-                  <div className="w-full max-w-sm mx-auto">
+
+                  {!me.ready ? (
                     <button
                       onClick={toggleReady}
-                      className={`w-full py-3 rounded-xl font-bold text-lg shadow-lg transition-all mb-2 ${
-                        me.ready
-                          ? "bg-green-600/20 border border-green-500 text-green-400 cursor-default"
-                          : "bg-cyan-600 hover:bg-cyan-500 text-white"
+                      className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded font-bold text-white shadow-lg animate-pulse"
+                    >
+                      MARK READY
+                    </button>
+                  ) : (
+                    <div className="text-center text-green-400 text-sm font-bold flex items-center justify-center gap-2 py-2 bg-green-900/10 rounded">
+                      <CheckCircle size={16} /> YOU ARE READY
+                    </div>
+                  )}
+                </div>
+
+                {/* --- HOST CONTROLS --- */}
+                {gameState.hostId === user.uid && (
+                  <div className="flex gap-4 justify-center w-full">
+                    <button
+                      onClick={startGame}
+                      disabled={!allPlayersReady}
+                      className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                        allPlayersReady
+                          ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/50 shadow-lg"
+                          : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50"
                       }`}
                     >
-                      {me.ready ? "READY - STANDING BY" : "MARK READY"}
+                      <RotateCcw size={18} /> Restart
                     </button>
-                    <div className="text-slate-500 text-xs italic">
-                      Waiting for Host command...
-                    </div>
+                    <button
+                      onClick={returnToLobby}
+                      disabled={!allPlayersReady}
+                      className={`px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all ${
+                        allPlayersReady
+                          ? "bg-slate-700 hover:bg-slate-600 text-white"
+                          : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50"
+                      }`}
+                    >
+                      <Power size={18} /> Lobby
+                    </button>
+                  </div>
+                )}
+                {gameState.hostId === user.uid && !allPlayersReady && (
+                  <div className="text-xs text-slate-500 mt-2 italic">
+                    Waiting for all runners to mark ready...
                   </div>
                 )}
               </div>
@@ -1403,9 +1673,32 @@ export default function NeonDraftGame() {
                     <Smartphone size={18} className="text-cyan-400" /> Incoming
                     Stream ({me.hand.length})
                   </h3>
+
+                  {/* Proxy Toggle */}
+                  {hasProxy && !waitingForOthers && me.hand.length >= 2 && (
+                    <button
+                      onClick={() => {
+                        setIsUsingProxy(!isUsingProxy);
+                        setSelectedCardIndices([]);
+                      }}
+                      className={`text-xs px-3 py-1 rounded-full border transition-colors flex items-center gap-1 ${
+                        isUsingProxy
+                          ? "bg-cyan-900/50 border-cyan-400 text-cyan-300"
+                          : "bg-slate-800 border-slate-600 text-slate-400 hover:border-cyan-500"
+                      }`}
+                    >
+                      {isUsingProxy ? (
+                        <CheckCircle size={12} />
+                      ) : (
+                        <Repeat size={12} />
+                      )}
+                      Use Proxy Protocol {isUsingProxy ? "(Pick 2)" : ""}
+                    </button>
+                  )}
+
                   {waitingForOthers && (
                     <div className="flex items-center gap-2 text-cyan-400 text-sm font-bold animate-pulse">
-                      <Loader2 size={16} className="animate-spin" />{" "}
+                      <Loader2 size={16} className="animate-spin" />
                       Synchronizing...
                     </div>
                   )}
@@ -1424,31 +1717,32 @@ export default function NeonDraftGame() {
                     >
                       <Card
                         typeId={c}
-                        onClick={() => selectCard(i)}
-                        selected={selectedCardIdx === i}
+                        onClick={() => toggleCardSelection(i)}
+                        selected={selectedCardIndices.includes(i)}
                       />
                     </div>
                   ))}
                 </div>
 
-                {/* Action Button */}
                 <button
                   onClick={confirmSelection}
-                  disabled={selectedCardIdx === null || waitingForOthers}
+                  disabled={
+                    selectedCardIndices.length === 0 || waitingForOthers
+                  }
                   className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all mt-2
-                                    ${
-                                      waitingForOthers
-                                        ? "bg-slate-800 text-cyan-400/50 cursor-wait border border-slate-700"
-                                        : selectedCardIdx !== null
-                                        ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/50"
-                                        : "bg-slate-800 text-slate-500 cursor-not-allowed"
-                                    }`}
+                        ${
+                          waitingForOthers
+                            ? "bg-slate-800 text-cyan-400/50 cursor-wait border border-slate-700"
+                            : selectedCardIndices.length > 0
+                            ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/50"
+                            : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                        }`}
                 >
                   {waitingForOthers
                     ? "Waiting for other runners..."
-                    : selectedCardIdx !== null
-                    ? "ACQUIRE DATA"
-                    : "Select a Fragment"}
+                    : isUsingProxy && selectedCardIndices.length < 2
+                    ? "Select 2nd Fragment..."
+                    : "ACQUIRE DATA"}
                 </button>
               </>
             )}
