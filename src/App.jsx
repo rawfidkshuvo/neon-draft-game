@@ -964,7 +964,7 @@ export default function NeonDraftGame() {
           <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 font-serif tracking-widest drop-shadow-md">
             NEON DRAFT
           </h1>
-          <p className="text-cyan-600/60 tracking-[0.3em] uppercase mt-2">
+          <p className="text-white-400/60 tracking-[0.3em] uppercase mt-2">
             Build Your Rig. Rule the Net.
           </p>
         </div>
@@ -1013,6 +1013,20 @@ export default function NeonDraftGame() {
           >
             <BookOpen size={16} /> Data Manual
           </button>
+        </div>
+        <div className="absolute bottom-4 text-slate-600 text-xs text-center">
+          Inspired by Sushi Go. A tribute game.
+          <br />
+          Developed by <strong>RAWFID K SHUVO</strong>. Visit{" "}
+          <a
+            href="https://rawfidkshuvo.github.io/gamehub/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-cyan-500 underline hover:text-cyan-600"
+          >
+            GAMEHUB
+          </a>{" "}
+          for more games.
         </div>
       </div>
     );
