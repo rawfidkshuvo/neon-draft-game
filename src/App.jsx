@@ -396,69 +396,173 @@ const LogViewer = ({ logs, onClose }) => (
 );
 
 const RulesModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-0 md:p-4 animate-in fade-in">
-    <div className="bg-slate-900 md:rounded-2xl w-full max-w-4xl h-full md:h-auto md:max-h-[90vh] overflow-hidden border-none md:border border-cyan-500/30 flex flex-col">
-      <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2 tracking-wider">
-          <BookOpen className="text-cyan-400" /> Data Runner's Manual
-        </h2>
+  <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-2 md:p-6 animate-in fade-in">
+    <div className="bg-slate-900 md:rounded-2xl w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] overflow-hidden border-none md:border border-cyan-500/30 flex flex-col shadow-[0_0_50px_rgba(34,211,238,0.15)]">
+      
+      {/* Header */}
+      <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 sticky top-0 z-10">
+        <div className="flex flex-col">
+          <h2 className="text-2xl font-black text-white flex items-center gap-3 tracking-widest uppercase">
+            <BookOpen className="text-cyan-400" /> Data Runner's Manual
+          </h2>
+          <span className="text-xs text-slate-500 font-mono tracking-[0.2em]">OPERATIONAL PROTOCOLS v2.0</span>
+        </div>
         <button
           onClick={onClose}
-          className="p-2 hover:bg-slate-800 rounded-full text-slate-400"
+          className="p-2 hover:bg-slate-800 rounded-full text-slate-400 transition-colors"
         >
-          <X />
+          <X size={24} />
         </button>
       </div>
-      <div className="p-6 overflow-y-auto text-slate-300 space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-cyan-900/10 p-4 rounded-lg border border-cyan-500/20">
-            <h3 className="text-xl font-bold text-cyan-400 mb-2">The Draft</h3>
-            <ul className="list-disc pl-5 space-y-2 text-sm">
-              <li>
-                <strong>Select:</strong> Pick 1 card to keep (or 2 if using
-                Proxy).
-              </li>
-              <li>
-                <strong>Reveal:</strong> Add to your Rig.
-              </li>
-              <li>
-                <strong>Pass:</strong> Hand remaining cards to the left.
-              </li>
-              <li>3 Rounds total. Highest TB (Score) wins.</li>
-            </ul>
+
+      <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scrollbar-thin scrollbar-thumb-slate-700">
+        
+        {/* SECTION 1: THE LOOP */}
+        <section>
+          <h3 className="text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2 border-b border-cyan-900/50 pb-2">
+            <Repeat size={18} /> THE DRAFT LOOP
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-2">
+              <div className="w-12 h-12 bg-cyan-900/30 rounded-full flex items-center justify-center text-cyan-400 mb-1 border border-cyan-500/30">
+                <MousePointerClick size={24} />
+              </div>
+              <div className="font-bold text-white">1. SELECT</div>
+              <p className="text-xs text-slate-400">Pick 1 card to keep. <br/>(Pick 2 if using Proxy).</p>
+            </div>
+            
+            <div className="hidden md:flex items-center justify-center text-slate-600">
+              <ArrowRight size={32} />
+            </div>
+
+            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-2">
+              <div className="w-12 h-12 bg-purple-900/30 rounded-full flex items-center justify-center text-purple-400 mb-1 border border-purple-500/30">
+                <Layers size={24} />
+              </div>
+              <div className="font-bold text-white">2. REVEAL</div>
+              <p className="text-xs text-slate-400">Cards are added to your rig simultaneously.</p>
+            </div>
+
+            <div className="hidden md:flex items-center justify-center text-slate-600">
+              <ArrowRight size={32} />
+            </div>
+
+            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-2">
+              <div className="w-12 h-12 bg-green-900/30 rounded-full flex items-center justify-center text-green-400 mb-1 border border-green-500/30">
+                <RotateCw size={24} />
+              </div>
+              <div className="font-bold text-white">3. PASS</div>
+              <p className="text-xs text-slate-400">Hand remaining deck to the left. Repeat until empty.</p>
+            </div>
           </div>
-          <div className="bg-purple-900/10 p-4 rounded-lg border border-purple-500/20">
-            <h3 className="text-xl font-bold text-purple-400 mb-2">
-              Scoring Protocols
-            </h3>
-            <ul className="list-disc pl-5 space-y-2 text-sm">
-              <li>
-                <strong>GPU:</strong> Pair (2 cards) = 5 pts.
-              </li>
-              <li>
-                <strong>Mainframe:</strong> Set (3 cards) = 10 pts.
-              </li>
-              <li>
-                <strong>Key:</strong> 1/3/6/10/15 pts for 1/2/3/4/5+ cards.
-              </li>
-              <li>
-                <strong>Exploit:</strong> Triples the <em>very next</em> Cache
-                card played. Unused Exploits = 0 pts.
-              </li>
-              <li>
-                <strong>Botnet:</strong> Round End. Most = 6 pts. 2nd Most = 3
-                pts.
-              </li>
-              <li>
-                <strong>Backdoor:</strong> Game End. Most = 6 pts. Fewest = -6
-                pts.
-              </li>
-              <li>
-                <strong>Proxy:</strong> Use on turn to swap for 2 cards.
-              </li>
-            </ul>
+        </section>
+
+        {/* SECTION 2: SCORING DATABASE */}
+        <section>
+          <h3 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2 border-b border-purple-900/50 pb-2">
+            <Database size={18} /> SCORING DATABASE
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            
+            {/* GPU */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-purple-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">GPU Cluster</span>
+                <Cpu size={16} className="text-purple-400" />
+              </div>
+              <div className="text-xs text-slate-400">Must be collected in pairs.</div>
+              <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-purple-300">
+                2 Cards = 5 TB
+              </div>
+            </div>
+
+            {/* Mainframe */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-green-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Mainframe</span>
+                <Server size={16} className="text-green-400" />
+              </div>
+              <div className="text-xs text-slate-400">Huge storage, but requires a full set.</div>
+              <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-green-300">
+                3 Cards = 10 TB
+              </div>
+            </div>
+
+            {/* Cache + Exploit */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-yellow-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Exploit & Cache</span>
+                <div className="flex gap-1">
+                  <Zap size={16} className="text-yellow-400" />
+                  <Disc size={16} className="text-orange-400" />
+                </div>
+              </div>
+              <div className="text-xs text-slate-400">
+                <span className="text-yellow-400 font-bold">Exploit</span> triples the value of your <span className="underline">next</span> Cache card.
+              </div>
+              <div className="bg-black/40 p-2 rounded text-center font-mono text-xs text-yellow-200">
+                [Exploit] + [2 TB Cache] = 6 TB
+              </div>
+            </div>
+
+            {/* Encryption Keys */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-blue-500 flex flex-col gap-2 md:col-span-2 lg:col-span-1">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Encryption Keys</span>
+                <Lock size={16} className="text-blue-400" />
+              </div>
+              <div className="text-xs text-slate-400">Exponential growth. The more the better.</div>
+              <div className="grid grid-cols-5 gap-1 text-center font-mono text-[10px]">
+                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">1</div>1TB</div>
+                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">2</div>3TB</div>
+                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">3</div>6TB</div>
+                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">4</div>10TB</div>
+                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">5+</div>15TB</div>
+              </div>
+            </div>
+
+            {/* Botnet */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-red-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Botnet Node</span>
+                <Wifi size={16} className="text-red-500" />
+              </div>
+              <div className="text-xs text-slate-400">Competitive scoring per round.</div>
+              <div className="flex gap-2 text-xs text-center font-mono">
+                <div className="bg-black/40 p-2 rounded flex-1">
+                  <div className="text-red-400 font-bold">Most</div>
+                  6 TB
+                </div>
+                <div className="bg-black/40 p-2 rounded flex-1">
+                  <div className="text-red-300 font-bold">2nd</div>
+                  3 TB
+                </div>
+              </div>
+            </div>
+
+            {/* Backdoor */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-pink-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Backdoor</span>
+                <Ghost size={16} className="text-pink-400" />
+              </div>
+              <div className="text-xs text-slate-400">Kept until <span className="text-pink-400 font-bold">Game End</span>.</div>
+              <div className="flex gap-2 text-xs text-center font-mono">
+                <div className="bg-black/40 p-2 rounded flex-1">
+                  <div className="text-green-400 font-bold">Most</div>
+                  +6 TB
+                </div>
+                <div className="bg-black/40 p-2 rounded flex-1">
+                  <div className="text-red-400 font-bold">Least</div>
+                  -6 TB
+                </div>
+              </div>
+            </div>
+
           </div>
-        </div>
+        </section>
+
       </div>
     </div>
   </div>
