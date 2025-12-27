@@ -407,7 +407,7 @@ const RulesModal = ({ onClose }) => (
           <h2 className="text-2xl font-black text-white flex items-center gap-3 tracking-widest uppercase">
             <BookOpen className="text-cyan-400" /> Data Runner's Manual
           </h2>
-          <span className="text-xs text-slate-500 font-mono tracking-[0.2em]">OPERATIONAL PROTOCOLS v2.0</span>
+          <span className="text-xs text-slate-500 font-mono tracking-[0.2em]">OPERATIONAL PROTOCOLS v2.1</span>
         </div>
         <button
           onClick={onClose}
@@ -467,55 +467,75 @@ const RulesModal = ({ onClose }) => (
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             
-            {/* GPU */}
+            {/* 1. Data Cache (New Separate Box) */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-orange-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Data Cache</span>
+                <Disc size={16} className="text-orange-400" />
+              </div>
+              <div className="text-xs text-slate-400">Raw data files. Come in 3 sizes.</div>
+              <div className="flex justify-between items-center bg-black/40 p-2 rounded mt-auto">
+                <div className="text-center">
+                   <div className="text-slate-400 font-black text-xs">1</div>
+                   <div className="text-[10px] text-slate-600">TB</div>
+                </div>
+                <div className="text-center border-l border-slate-700 pl-4">
+                   <div className="text-orange-400 font-black text-xs">2</div>
+                   <div className="text-[10px] text-slate-600">TB</div>
+                </div>
+                <div className="text-center border-l border-slate-700 pl-4">
+                   <div className="text-yellow-400 font-black text-xs">3</div>
+                   <div className="text-[10px] text-slate-600">TB</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Exploit (New Separate Box) */}
+             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-yellow-500 flex flex-col gap-2">
+              <div className="flex justify-between items-start">
+                <span className="font-bold text-white text-sm">Zero-Day Exploit</span>
+                <Zap size={16} className="text-yellow-400" />
+              </div>
+              <div className="text-xs text-slate-400">
+                Multiplies the <span className="underline">next</span> Cache card x3.
+              </div>
+              <div className="bg-black/40 p-2 rounded text-center font-mono text-xs text-yellow-200 mt-auto">
+                [Exploit] + [2 TB] = <span className="font-bold">6 TB</span>
+              </div>
+            </div>
+
+            {/* 3. GPU */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-purple-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
                 <span className="font-bold text-white text-sm">GPU Cluster</span>
                 <Cpu size={16} className="text-purple-400" />
               </div>
               <div className="text-xs text-slate-400">Must be collected in pairs.</div>
-              <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-purple-300">
+              <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-purple-300 mt-auto">
                 2 Cards = 5 TB
               </div>
             </div>
 
-            {/* Mainframe */}
+            {/* 4. Mainframe */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-green-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
                 <span className="font-bold text-white text-sm">Mainframe</span>
                 <Server size={16} className="text-green-400" />
               </div>
               <div className="text-xs text-slate-400">Huge storage, but requires a full set.</div>
-              <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-green-300">
+              <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-green-300 mt-auto">
                 3 Cards = 10 TB
               </div>
             </div>
 
-            {/* Cache + Exploit */}
-            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-yellow-500 flex flex-col gap-2">
-              <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">Exploit & Cache</span>
-                <div className="flex gap-1">
-                  <Zap size={16} className="text-yellow-400" />
-                  <Disc size={16} className="text-orange-400" />
-                </div>
-              </div>
-              <div className="text-xs text-slate-400">
-                <span className="text-yellow-400 font-bold">Exploit</span> triples the value of your <span className="underline">next</span> Cache card.
-              </div>
-              <div className="bg-black/40 p-2 rounded text-center font-mono text-xs text-yellow-200">
-                [Exploit] + [2 TB Cache] = 6 TB
-              </div>
-            </div>
-
-            {/* Encryption Keys */}
+            {/* 5. Encryption Keys */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-blue-500 flex flex-col gap-2 md:col-span-2 lg:col-span-1">
               <div className="flex justify-between items-start">
                 <span className="font-bold text-white text-sm">Encryption Keys</span>
                 <Lock size={16} className="text-blue-400" />
               </div>
-              <div className="text-xs text-slate-400">Exponential growth. The more the better.</div>
-              <div className="grid grid-cols-5 gap-1 text-center font-mono text-[10px]">
+              <div className="text-xs text-slate-400">Exponential growth. Collect as many as possible.</div>
+              <div className="grid grid-cols-5 gap-1 text-center font-mono text-[10px] mt-auto">
                 <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">1</div>1TB</div>
                 <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">2</div>3TB</div>
                 <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">3</div>6TB</div>
@@ -524,14 +544,14 @@ const RulesModal = ({ onClose }) => (
               </div>
             </div>
 
-            {/* Botnet */}
+            {/* 6. Botnet */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-red-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
                 <span className="font-bold text-white text-sm">Botnet Node</span>
                 <Wifi size={16} className="text-red-500" />
               </div>
               <div className="text-xs text-slate-400">Competitive scoring per round.</div>
-              <div className="flex gap-2 text-xs text-center font-mono">
+              <div className="flex gap-2 text-xs text-center font-mono mt-auto">
                 <div className="bg-black/40 p-2 rounded flex-1">
                   <div className="text-red-400 font-bold">Most</div>
                   6 TB
@@ -543,20 +563,20 @@ const RulesModal = ({ onClose }) => (
               </div>
             </div>
 
-            {/* Backdoor */}
-            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-pink-500 flex flex-col gap-2">
+            {/* 7. Backdoor */}
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-pink-500 flex flex-col gap-2 md:col-span-2 lg:col-span-3">
               <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">Backdoor</span>
+                <span className="font-bold text-white text-sm">Backdoor Access</span>
                 <Ghost size={16} className="text-pink-400" />
               </div>
-              <div className="text-xs text-slate-400">Kept until <span className="text-pink-400 font-bold">Game End</span>.</div>
-              <div className="flex gap-2 text-xs text-center font-mono">
-                <div className="bg-black/40 p-2 rounded flex-1">
-                  <div className="text-green-400 font-bold">Most</div>
+              <div className="text-xs text-slate-400">Kept until <span className="text-pink-400 font-bold">Game End</span>. Watch out for the penalty!</div>
+              <div className="flex gap-2 text-xs text-center font-mono mt-auto">
+                <div className="bg-black/40 p-2 rounded flex-1 border border-green-900/50">
+                  <div className="text-green-400 font-bold">Most Collected</div>
                   +6 TB
                 </div>
-                <div className="bg-black/40 p-2 rounded flex-1">
-                  <div className="text-red-400 font-bold">Least</div>
+                <div className="bg-black/40 p-2 rounded flex-1 border border-red-900/50">
+                  <div className="text-red-400 font-bold">Fewest Collected</div>
                   -6 TB
                 </div>
               </div>
