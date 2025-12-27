@@ -44,6 +44,8 @@ import {
   ArrowRight,
   Clock, // Added Clock icon
   Power, // Added Power icon
+  MousePointerClick,
+  RotateCw,
 } from "lucide-react";
 
 // --- Firebase Config ---
