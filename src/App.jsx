@@ -262,20 +262,45 @@ const LeaveConfirmModal = ({
 );
 
 // Round Summary Component
-const RoundSummary = ({ players, round, onNext, isHost }) => {
+const RoundSummary = ({
+  players,
+  round,
+  onNext,
+  isHost,
+  onToggleReady,
+  currentUserId,
+}) => {
+  // Identify guests (everyone except the current user if the current user is Host)
+  const guests = isHost
+    ? players.filter((p) => p.id !== currentUserId)
+    : players.filter(
+        (p) => p.id !== players.find((pl) => pl.id === currentUserId)?.id
+      ); // Fallback for guests view
+
+  // Check if all guests are ready
+  const allGuestsReady = guests.every((p) => p.ready);
+  const readyCount = guests.filter((p) => p.ready).length;
+  const totalGuests = guests.length;
+
+  const me = players.find((p) => p.id === currentUserId);
+
   return (
-    <div className="fixed inset-0 bg-black/95 z-[150] flex items-center justify-center p-4 animate-in fade-in">
+    <div className="fixed inset-0 top-14 bg-black/95 z-[150] flex items-center justify-center p-4 animate-in fade-in">
       <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden max-h-[90vh]">
+        {/* Header */}
         <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
           <h2 className="text-2xl font-bold text-white flex items-center gap-2 tracking-wider">
             <FileBarChart className="text-cyan-400" />
             ROUND {round} SUMMARY
           </h2>
-          <div className="text-sm text-slate-500 font-mono">
-            CALCULATING METRICS...
+          <div className="flex items-center gap-3">
+            <div className="text-xs font-mono bg-slate-800 px-3 py-1 rounded text-slate-300">
+              GUESTS READY: {readyCount}/{totalGuests}
+            </div>
           </div>
         </div>
 
+        {/* Table Content */}
         <div className="p-6 overflow-y-auto space-y-4">
           <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2">
             <div className="col-span-3">Runner</div>
@@ -287,19 +312,35 @@ const RoundSummary = ({ players, round, onNext, isHost }) => {
           {players
             .sort((a, b) => b.score - a.score)
             .map((p) => {
-              // Get the history entry for this round
               const roundData = p.history.find((h) => h.round === round);
               const roundCards = roundData ? roundData.cards : [];
               const roundScore = roundData ? roundData.score : 0;
+              const isMe = p.id === currentUserId;
+
+              // Determine if this specific row is the host
+              // We assume 'isHost' prop is true if *viewer* is host,
+              // but we need to know if *this player row* is the host.
+              // Since we don't pass hostId explicitly, we infer:
+              // if I am host (isHost=true) and isMe=true, then this row is host.
+              // If I am guest, we can't easily know who host is without hostId prop,
+              // but for styling the checkmark it matters less.
+              // We'll just check p.ready.
 
               return (
                 <div
                   key={p.id}
-                  className="grid grid-cols-12 gap-4 items-center bg-slate-800/30 p-3 rounded-lg border border-slate-700/50"
+                  className={`grid grid-cols-12 gap-4 items-center p-3 rounded-lg border transition-all ${
+                    p.ready
+                      ? "bg-green-900/10 border-green-500/30"
+                      : "bg-slate-800/30 border-slate-700/50"
+                  }`}
                 >
                   <div className="col-span-3 font-bold text-white truncate flex items-center gap-2">
                     <User size={14} className="text-slate-400" />
                     {p.name}
+                    {p.ready && (
+                      <CheckCircle size={14} className="text-green-500" />
+                    )}
                   </div>
                   <div className="col-span-5 flex flex-wrap gap-1">
                     {roundCards.map((cId, i) => {
@@ -332,20 +373,40 @@ const RoundSummary = ({ players, round, onNext, isHost }) => {
             })}
         </div>
 
-        <div className="p-6 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-slate-800 bg-slate-950/50 flex justify-end gap-4">
           {isHost ? (
             <button
               onClick={onNext}
-              className="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-cyan-900/20"
+              disabled={!allGuestsReady} // <--- Disable logic added here
+              className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg ${
+                allGuestsReady
+                  ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50"
+              }`}
             >
-              {round >= 3 ? "Initialize Final Scoring" : "Start Next Round"}{" "}
+              {round >= 3 ? "Initialize Final Scoring" : "Start Next Round"}
               <ArrowRight size={18} />
             </button>
           ) : (
-            <div className="text-slate-400 italic animate-pulse flex items-center gap-2">
-              <Loader2 size={16} className="animate-spin" /> Waiting for Host to
-              proceed...
-            </div>
+            <button
+              onClick={onToggleReady}
+              className={`px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg w-full md:w-auto justify-center ${
+                me?.ready
+                  ? "bg-green-600/20 text-green-400 border border-green-500/50 hover:bg-green-600/30"
+                  : "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/20 animate-pulse"
+              }`}
+            >
+              {me?.ready ? (
+                <>
+                  <CheckCircle size={18} /> READY - STANDING BY
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={18} /> MARK READY
+                </>
+              )}
+            </button>
           )}
         </div>
       </div>
@@ -355,7 +416,7 @@ const RoundSummary = ({ players, round, onNext, isHost }) => {
 
 // Log Viewer
 const LogViewer = ({ logs, onClose }) => (
-  <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-0 md:p-4">
+  <div className="fixed inset-0 top-14 bg-black/90 z-[155] flex items-center justify-center p-0 md:p-4">
     <div className="bg-slate-900 w-full md:max-w-md h-full md:h-[70vh] rounded-none md:rounded-xl flex flex-col border-none md:border border-slate-700 shadow-2xl">
       <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -400,14 +461,15 @@ const LogViewer = ({ logs, onClose }) => (
 const RulesModal = ({ onClose }) => (
   <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-2 md:p-6 animate-in fade-in">
     <div className="bg-slate-900 md:rounded-2xl w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] overflow-hidden border-none md:border border-cyan-500/30 flex flex-col shadow-[0_0_50px_rgba(34,211,238,0.15)]">
-      
       {/* Header */}
       <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 sticky top-0 z-10">
         <div className="flex flex-col">
           <h2 className="text-2xl font-black text-white flex items-center gap-3 tracking-widest uppercase">
             <BookOpen className="text-cyan-400" /> Data Runner's Manual
           </h2>
-          <span className="text-xs text-slate-500 font-mono tracking-[0.2em]">OPERATIONAL PROTOCOLS v2.1</span>
+          <span className="text-xs text-slate-500 font-mono tracking-[0.2em]">
+            OPERATIONAL PROTOCOLS v2.1
+          </span>
         </div>
         <button
           onClick={onClose}
@@ -418,7 +480,6 @@ const RulesModal = ({ onClose }) => (
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scrollbar-thin scrollbar-thumb-slate-700">
-        
         {/* SECTION 1: THE LOOP */}
         <section>
           <h3 className="text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2 border-b border-cyan-900/50 pb-2">
@@ -430,9 +491,12 @@ const RulesModal = ({ onClose }) => (
                 <MousePointerClick size={24} />
               </div>
               <div className="font-bold text-white">1. SELECT</div>
-              <p className="text-xs text-slate-400">Pick 1 card to keep. <br/>(Pick 2 if using Proxy).</p>
+              <p className="text-xs text-slate-400">
+                Pick 1 card to keep. <br />
+                (Pick 2 if using Proxy).
+              </p>
             </div>
-            
+
             <div className="hidden md:flex items-center justify-center text-slate-600">
               <ArrowRight size={32} />
             </div>
@@ -442,7 +506,9 @@ const RulesModal = ({ onClose }) => (
                 <Layers size={24} />
               </div>
               <div className="font-bold text-white">2. REVEAL</div>
-              <p className="text-xs text-slate-400">Cards are added to your rig simultaneously.</p>
+              <p className="text-xs text-slate-400">
+                Cards are added to your rig simultaneously.
+              </p>
             </div>
 
             <div className="hidden md:flex items-center justify-center text-slate-600">
@@ -454,7 +520,9 @@ const RulesModal = ({ onClose }) => (
                 <RotateCw size={24} />
               </div>
               <div className="font-bold text-white">3. PASS</div>
-              <p className="text-xs text-slate-400">Hand remaining deck to the left. Repeat until empty.</p>
+              <p className="text-xs text-slate-400">
+                Hand remaining deck to the left. Repeat until empty.
+              </p>
             </div>
           </div>
         </section>
@@ -464,40 +532,44 @@ const RulesModal = ({ onClose }) => (
           <h3 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2 border-b border-purple-900/50 pb-2">
             <Database size={18} /> SCORING DATABASE
           </h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            
             {/* 1. Data Cache (New Separate Box) */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-orange-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
                 <span className="font-bold text-white text-sm">Data Cache</span>
                 <Disc size={16} className="text-orange-400" />
               </div>
-              <div className="text-xs text-slate-400">Raw data files. Come in 3 sizes.</div>
+              <div className="text-xs text-slate-400">
+                Raw data files. Come in 3 sizes.
+              </div>
               <div className="flex justify-between items-center bg-black/40 p-2 rounded mt-auto">
                 <div className="text-center">
-                   <div className="text-slate-400 font-black text-xs">1</div>
-                   <div className="text-[10px] text-slate-600">TB</div>
+                  <div className="text-slate-400 font-black text-xs">1</div>
+                  <div className="text-[10px] text-slate-600">TB</div>
                 </div>
                 <div className="text-center border-l border-slate-700 pl-4">
-                   <div className="text-orange-400 font-black text-xs">2</div>
-                   <div className="text-[10px] text-slate-600">TB</div>
+                  <div className="text-orange-400 font-black text-xs">2</div>
+                  <div className="text-[10px] text-slate-600">TB</div>
                 </div>
                 <div className="text-center border-l border-slate-700 pl-4">
-                   <div className="text-yellow-400 font-black text-xs">3</div>
-                   <div className="text-[10px] text-slate-600">TB</div>
+                  <div className="text-yellow-400 font-black text-xs">3</div>
+                  <div className="text-[10px] text-slate-600">TB</div>
                 </div>
               </div>
             </div>
 
             {/* 2. Exploit (New Separate Box) */}
-             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-yellow-500 flex flex-col gap-2">
+            <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-yellow-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">Zero-Day Exploit</span>
+                <span className="font-bold text-white text-sm">
+                  Zero-Day Exploit
+                </span>
                 <Zap size={16} className="text-yellow-400" />
               </div>
               <div className="text-xs text-slate-400">
-                Multiplies the <span className="underline">next</span> Cache card x3.
+                Multiplies the <span className="underline">next</span> Cache
+                card x3.
               </div>
               <div className="bg-black/40 p-2 rounded text-center font-mono text-xs text-yellow-200 mt-auto">
                 [Exploit] + [2 TB] = <span className="font-bold">6 TB</span>
@@ -507,10 +579,14 @@ const RulesModal = ({ onClose }) => (
             {/* 3. GPU */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-purple-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">GPU Cluster</span>
+                <span className="font-bold text-white text-sm">
+                  GPU Cluster
+                </span>
                 <Cpu size={16} className="text-purple-400" />
               </div>
-              <div className="text-xs text-slate-400">Must be collected in pairs.</div>
+              <div className="text-xs text-slate-400">
+                Must be collected in pairs.
+              </div>
               <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-purple-300 mt-auto">
                 2 Cards = 5 TB
               </div>
@@ -522,7 +598,9 @@ const RulesModal = ({ onClose }) => (
                 <span className="font-bold text-white text-sm">Mainframe</span>
                 <Server size={16} className="text-green-400" />
               </div>
-              <div className="text-xs text-slate-400">Huge storage, but requires a full set.</div>
+              <div className="text-xs text-slate-400">
+                Huge storage, but requires a full set.
+              </div>
               <div className="bg-black/40 p-2 rounded text-center font-mono text-sm text-green-300 mt-auto">
                 3 Cards = 10 TB
               </div>
@@ -531,34 +609,50 @@ const RulesModal = ({ onClose }) => (
             {/* 5. Encryption Keys */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-blue-500 flex flex-col gap-2 md:col-span-2 lg:col-span-1">
               <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">Encryption Keys</span>
+                <span className="font-bold text-white text-sm">
+                  Encryption Keys
+                </span>
                 <Lock size={16} className="text-blue-400" />
               </div>
-              <div className="text-xs text-slate-400">Exponential growth. Collect as many as possible.</div>
+              <div className="text-xs text-slate-400">
+                Exponential growth. Collect as many as possible.
+              </div>
               <div className="grid grid-cols-5 gap-1 text-center font-mono text-[10px] mt-auto">
-                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">1</div>1TB</div>
-                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">2</div>3TB</div>
-                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">3</div>6TB</div>
-                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">4</div>10TB</div>
-                <div className="bg-black/40 p-1 rounded"><div className="text-blue-500">5+</div>15TB</div>
+                <div className="bg-black/40 p-1 rounded">
+                  <div className="text-blue-500">1</div>1TB
+                </div>
+                <div className="bg-black/40 p-1 rounded">
+                  <div className="text-blue-500">2</div>3TB
+                </div>
+                <div className="bg-black/40 p-1 rounded">
+                  <div className="text-blue-500">3</div>6TB
+                </div>
+                <div className="bg-black/40 p-1 rounded">
+                  <div className="text-blue-500">4</div>10TB
+                </div>
+                <div className="bg-black/40 p-1 rounded">
+                  <div className="text-blue-500">5+</div>15TB
+                </div>
               </div>
             </div>
 
             {/* 6. Botnet */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-red-500 flex flex-col gap-2">
               <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">Botnet Node</span>
+                <span className="font-bold text-white text-sm">
+                  Botnet Node
+                </span>
                 <Wifi size={16} className="text-red-500" />
               </div>
-              <div className="text-xs text-slate-400">Competitive scoring per round.</div>
+              <div className="text-xs text-slate-400">
+                Competitive scoring per round.
+              </div>
               <div className="flex gap-2 text-xs text-center font-mono mt-auto">
                 <div className="bg-black/40 p-2 rounded flex-1">
-                  <div className="text-red-400 font-bold">Most</div>
-                  6 TB
+                  <div className="text-red-400 font-bold">Most</div>6 TB
                 </div>
                 <div className="bg-black/40 p-2 rounded flex-1">
-                  <div className="text-red-300 font-bold">2nd</div>
-                  3 TB
+                  <div className="text-red-300 font-bold">2nd</div>3 TB
                 </div>
               </div>
             </div>
@@ -566,10 +660,16 @@ const RulesModal = ({ onClose }) => (
             {/* 7. Backdoor */}
             <div className="bg-slate-800/40 p-3 rounded-lg border-l-4 border-pink-500 flex flex-col gap-2 md:col-span-2 lg:col-span-3">
               <div className="flex justify-between items-start">
-                <span className="font-bold text-white text-sm">Backdoor Access</span>
+                <span className="font-bold text-white text-sm">
+                  Backdoor Access
+                </span>
                 <Ghost size={16} className="text-pink-400" />
               </div>
-              <div className="text-xs text-slate-400">Kept until <span className="text-pink-400 font-bold">Game End</span>. Watch out for the penalty!</div>
+              <div className="text-xs text-slate-400">
+                Kept until{" "}
+                <span className="text-pink-400 font-bold">Game End</span>. Watch
+                out for the penalty!
+              </div>
               <div className="flex gap-2 text-xs text-center font-mono mt-auto">
                 <div className="bg-black/40 p-2 rounded flex-1 border border-green-900/50">
                   <div className="text-green-400 font-bold">Most Collected</div>
@@ -581,10 +681,8 @@ const RulesModal = ({ onClose }) => (
                 </div>
               </div>
             </div>
-
           </div>
         </section>
-
       </div>
     </div>
   </div>
@@ -1099,6 +1197,11 @@ export default function NeonDraftGame() {
         type: "success",
       });
 
+      // --- ADD THIS BLOCK HERE ---
+      // Reset ready status for the summary screen check
+      finalPlayers.forEach((p) => (p.ready = false));
+      // ---------------------------
+
       // --- ROUND SCORING ---
       const breakdowns = finalPlayers.map((p) =>
         calculateScoreBreakdown(p.keptCards)
@@ -1513,11 +1616,13 @@ export default function NeonDraftGame() {
             round={gameState.round}
             isHost={gameState.hostId === user.uid}
             onNext={proceedToNextRound}
+            onToggleReady={toggleReady}
+            currentUserId={user.uid}
           />
         )}
 
         {/* Top Bar */}
-        <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-50 backdrop-blur-md sticky top-0">
+        <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-[160] backdrop-blur-md sticky top-0">
           <div className="flex items-center gap-2">
             <span className="font-serif text-cyan-500 font-bold tracking-wider hidden md:block">
               NEON DRAFT
