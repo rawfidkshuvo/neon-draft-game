@@ -416,7 +416,7 @@ const RoundSummary = ({
 
 // Log Viewer
 const LogViewer = ({ logs, onClose }) => (
-  <div className="fixed inset-0 top-14 bg-black/90 z-[155] flex items-center justify-center p-0 md:p-4">
+  <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-[155] overflow-y-auto p-2 shadow-2xl">
     <div className="bg-slate-900 w-full md:max-w-md h-full md:h-[70vh] rounded-none md:rounded-xl flex flex-col border-none md:border border-slate-700 shadow-2xl">
       <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -1639,8 +1639,12 @@ export default function NeonDraftGame() {
               <BookOpen size={18} />
             </button>
             <button
-              onClick={() => setShowLogs(true)}
-              className="p-2 hover:bg-slate-800 rounded text-slate-400"
+              onClick={() => setShowLogs(!showLogs)}
+              className={`p-2 rounded-full ${
+                showLogs
+                  ? "bg-cyan-900 text-cyan-400"
+                  : "text-gray-400 hover:bg-gray-800"
+              }`}
             >
               <History size={18} />
             </button>
