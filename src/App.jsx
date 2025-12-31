@@ -459,7 +459,7 @@ const LogViewer = ({ logs, onClose }) => (
 );
 
 const RulesModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-2 md:p-6 animate-in fade-in">
+  <div className="fixed inset-0 bg-black/95 z-[170] flex items-center justify-center p-2 md:p-6 animate-in fade-in">
     <div className="bg-slate-900 md:rounded-2xl w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] overflow-hidden border-none md:border border-cyan-500/30 flex flex-col shadow-[0_0_50px_rgba(34,211,238,0.15)]">
       {/* Header */}
       <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 sticky top-0 z-10">
