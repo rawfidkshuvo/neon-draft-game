@@ -216,6 +216,15 @@ const NeonLogo = () => (
   </div>
 );
 
+const NeonLogoBig = () => (
+  <div className="flex items-center justify-center gap-1 opacity-60 mt-auto pb-2 pt-2 relative z-10">
+    <Layers size={20} className="text-cyan-400" />
+    <span className="text-[20px] font-black tracking-widest text-cyan-400 uppercase drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">
+      NEON DRAFT
+    </span>
+  </div>
+);
+
 const LeaveConfirmModal = ({
   onConfirmLeave,
   onConfirmLobby,
@@ -1480,6 +1489,7 @@ export default function NeonDraftGame() {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 relative">
         <FloatingBackground />
+        <NeonLogoBig />
         {showLeaveConfirm && (
           <LeaveConfirmModal
             onConfirmLeave={leaveRoom}
@@ -1628,7 +1638,7 @@ export default function NeonDraftGame() {
               NEON DRAFT
             </span>
             <span className="text-xs text-slate-500 bg-black/50 px-2 py-1 rounded">
-              R{gameState.round}
+              Round: {gameState.round}
             </span>
           </div>
           <div className="flex gap-2">
