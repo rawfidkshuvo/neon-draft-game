@@ -218,7 +218,7 @@ const NeonLogo = () => (
 
 const NeonLogoBig = () => (
   <div className="flex items-center justify-center gap-1 opacity-60 mt-auto pb-2 pt-2 relative z-10">
-    <Layers size={20} className="text-cyan-400" />
+    <Layers size={22} className="text-cyan-400" />
     <span className="text-[20px] font-black tracking-widest text-cyan-400 uppercase drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">
       NEON DRAFT
     </span>
