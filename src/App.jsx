@@ -804,7 +804,9 @@ const Card = ({ typeId, onClick, selected, small, disabled }) => {
 export default function NeonDraftGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  const [playerName, setPlayerName] = useState("");
+  const [playerName, setPlayerName] = useState(
+    () => localStorage.getItem("neondraft_playerName") || ""
+  );
   const [roomId, setRoomId] = useState("");
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [gameState, setGameState] = useState(null);
@@ -834,6 +836,10 @@ export default function NeonDraftGame() {
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (playerName) localStorage.setItem("neondraft_playerName", playerName);
+  }, [playerName]);
 
   // --- Session Restore ---
   useEffect(() => {
