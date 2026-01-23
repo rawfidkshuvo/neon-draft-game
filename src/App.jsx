@@ -804,9 +804,7 @@ const Card = ({ typeId, onClick, selected, small, disabled }) => {
 export default function NeonDraftGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem("neondraft_playerName") || ""
-  );
+  
   const [roomId, setRoomId] = useState("");
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [gameState, setGameState] = useState(null);
@@ -823,6 +821,15 @@ export default function NeonDraftGame() {
   const [selectedCardIndices, setSelectedCardIndices] = useState([]);
   const [isUsingProxy, setIsUsingProxy] = useState(false);
 
+  //read and fill global name
+  const [playerName, setPlayerName] = useState(
+    () => localStorage.getItem("gameHub_playerName") || ""
+  );
+  //set global name for all game
+  useEffect(() => {
+    if (playerName) localStorage.setItem("gameHub_playerName", playerName);
+  }, [playerName]);
+
   // --- Auth & Listener ---
   useEffect(() => {
     const initAuth = async () => {
@@ -837,9 +844,7 @@ export default function NeonDraftGame() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (playerName) localStorage.setItem("neondraft_playerName", playerName);
-  }, [playerName]);
+  
 
   // --- Session Restore ---
   useEffect(() => {
