@@ -198,7 +198,7 @@ const FloatingBackground = ({ isShaking }) => (
       isShaking ? "animate-shake bg-red-900/20" : ""
     }`}
   >
-    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/20 via-gray-950 to-black" />
+    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-yellow-900/20 via-gray-950 to-black" />
     <div className="absolute top-0 left-0 w-full h-full opacity-10">
       {[...Array(20)].map((_, i) => {
         const fruitKeys = Object.keys(CARDS);
@@ -206,7 +206,7 @@ const FloatingBackground = ({ isShaking }) => (
         return (
           <div
             key={i}
-            className="absolute animate-float text-white/20"
+            className="absolute animate-float text-white/60"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -261,7 +261,7 @@ const LeaveConfirmModal = ({
   isHost,
   inGame,
 }) => (
-  <div className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4 animate-in fade-in">
+  <div className="fixed inset-0 bg-black/90 z-200 flex items-center justify-center p-4 animate-in fade-in">
     <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 max-w-sm w-full text-center shadow-2xl">
       <h3 className="text-xl font-bold text-white mb-2">
         Disconnect from Grid?
@@ -323,7 +323,7 @@ const RoundSummary = ({
   const me = players.find((p) => p.id === currentUserId);
 
   return (
-    <div className="fixed inset-0 top-14 bg-black/95 z-[150] flex items-center justify-center p-4 animate-in fade-in">
+    <div className="fixed inset-0 top-14 bg-black/95 z-150 flex items-center justify-center p-4 animate-in fade-in">
       <div className="bg-slate-900 border border-cyan-500/30 rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden max-h-[90vh]">
         {/* Header */}
         <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
@@ -454,7 +454,7 @@ const RoundSummary = ({
 
 // Log Viewer
 const LogViewer = ({ logs, onClose }) => (
-  <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-[155] overflow-y-auto p-2 shadow-2xl">
+  <div className="fixed top-16 right-4 w-64 max-h-60 bg-gray-900/95 border border-gray-700 rounded-xl z-155 overflow-y-auto p-2 shadow-2xl">
     <div className="bg-slate-900 w-full md:max-w-md h-full md:h-[70vh] rounded-none md:rounded-xl flex flex-col border-none md:border border-slate-700 shadow-2xl">
       <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800">
         <h3 className="text-white font-bold text-lg flex items-center gap-2">
@@ -497,7 +497,7 @@ const LogViewer = ({ logs, onClose }) => (
 );
 
 const RulesModal = ({ onClose }) => (
-  <div className="fixed inset-0 bg-black/95 z-[170] flex items-center justify-center p-2 md:p-6 animate-in fade-in">
+  <div className="fixed inset-0 bg-black/95 z-170 flex items-center justify-center p-2 md:p-6 animate-in fade-in">
     <div className="bg-slate-900 md:rounded-2xl w-full max-w-5xl h-full md:h-auto md:max-h-[90vh] overflow-hidden border-none md:border border-cyan-500/30 flex flex-col shadow-[0_0_50px_rgba(34,211,238,0.15)]">
       {/* Header */}
       <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-950 sticky top-0 z-10">
@@ -728,7 +728,7 @@ const RulesModal = ({ onClose }) => (
 
 // Feedback Overlay
 const FeedbackOverlay = ({ type, message, subtext, icon: Icon }) => (
-  <div className="fixed inset-0 z-[160] flex items-center justify-center pointer-events-none">
+  <div className="fixed inset-0 z-160 flex items-center justify-center pointer-events-none">
     <div
       className={`
       flex flex-col items-center justify-center p-8 md:p-12 rounded-3xl border-4 shadow-[0_0_50px_rgba(0,0,0,0.8)] 
@@ -1453,7 +1453,7 @@ export default function NeonDraftGame() {
             size={64}
             className="text-cyan-400 mx-auto mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]"
           />
-          <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-600 font-serif tracking-widest drop-shadow-md">
+          <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-linear-to-br from-cyan-400 via-blue-500 to-purple-600 font-serif tracking-widest drop-shadow-md">
             NEON DRAFT
           </h1>
           <p className="text-white-400/60 tracking-[0.3em] uppercase mt-2">
@@ -1478,7 +1478,7 @@ export default function NeonDraftGame() {
           <button
             onClick={createRoom}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-cyan-700 to-blue-600 hover:from-cyan-600 hover:to-blue-500 p-4 rounded font-bold mb-4 flex items-center justify-center gap-2 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all"
+            className="w-full bg-linear-to-r from-cyan-700 to-blue-600 hover:from-cyan-600 hover:to-blue-500 p-4 rounded font-bold mb-4 flex items-center justify-center gap-2 border border-cyan-500/30 shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all"
           >
             <Server size={20} /> New Server
           </button>
@@ -1672,7 +1672,7 @@ export default function NeonDraftGame() {
         )}
 
         {/* Top Bar */}
-        <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-[160] backdrop-blur-md sticky top-0">
+        <div className="h-14 bg-slate-900/80 border-b border-slate-800 flex items-center justify-between px-4 z-160 backdrop-blur-md sticky top-0">
           <div className="flex items-center gap-2">
             <span className="font-serif text-cyan-500 font-bold tracking-wider hidden md:block">
               NEON DRAFT
