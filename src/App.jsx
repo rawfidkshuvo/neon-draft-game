@@ -46,6 +46,7 @@ import {
   Power, // Added Power icon
   MousePointerClick,
   RotateCw,
+  Copy,
 } from "lucide-react";
 
 // --- Firebase Config ---
@@ -55,7 +56,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
@@ -270,8 +271,8 @@ const LeaveConfirmModal = ({
         {isHost
           ? "WARNING: As Admin, leaving will shut down the server for all runners."
           : inGame
-          ? "Leaving now will corrupt the data stream for everyone."
-          : "Closing secure connection."}
+            ? "Leaving now will corrupt the data stream for everyone."
+            : "Closing secure connection."}
       </p>
       <div className="flex flex-col gap-3">
         <button
@@ -312,7 +313,7 @@ const RoundSummary = ({
   const guests = isHost
     ? players.filter((p) => p.id !== currentUserId)
     : players.filter(
-        (p) => p.id !== players.find((pl) => pl.id === currentUserId)?.id
+        (p) => p.id !== players.find((pl) => pl.id === currentUserId)?.id,
       ); // Fallback for guests view
 
   // Check if all guests are ready
@@ -475,8 +476,8 @@ const LogViewer = ({ logs, onClose }) => (
               log.type === "danger"
                 ? "bg-red-900/20 border-red-500 text-red-200"
                 : log.type === "success"
-                ? "bg-green-900/20 border-green-500 text-green-200"
-                : "bg-slate-700/50 border-slate-500 text-slate-300"
+                  ? "bg-green-900/20 border-green-500 text-green-200"
+                  : "bg-slate-700/50 border-slate-500 text-slate-300"
             }`}
           >
             <span className="opacity-50 mr-2 font-mono">
@@ -776,8 +777,8 @@ const Card = ({ typeId, onClick, selected, small, disabled }) => {
           selected
             ? "ring-4 ring-cyan-400 -translate-y-4 shadow-[0_0_20px_rgba(34,211,238,0.5)] z-20"
             : !disabled
-            ? "hover:-translate-y-1 hover:shadow-lg"
-            : "opacity-50 cursor-not-allowed"
+              ? "hover:-translate-y-1 hover:shadow-lg"
+              : "opacity-50 cursor-not-allowed"
         }
         ${onClick && !disabled ? "cursor-pointer" : ""}
         ${small ? "w-16 h-24 p-1" : "w-24 h-36 md:w-32 md:h-48 p-2"}
@@ -833,7 +834,7 @@ const Card = ({ typeId, onClick, selected, small, disabled }) => {
 export default function NeonDraftGame() {
   const [user, setUser] = useState(null);
   const [view, setView] = useState("menu");
-  
+
   const [roomId, setRoomId] = useState("");
   const [roomCodeInput, setRoomCodeInput] = useState("");
   const [gameState, setGameState] = useState(null);
@@ -852,7 +853,7 @@ export default function NeonDraftGame() {
 
   //read and fill global name
   const [playerName, setPlayerName] = useState(
-    () => localStorage.getItem("gameHub_playerName") || ""
+    () => localStorage.getItem("gameHub_playerName") || "",
   );
   //set global name for all game
   useEffect(() => {
@@ -872,8 +873,6 @@ export default function NeonDraftGame() {
     const unsubscribe = onAuthStateChanged(auth, setUser);
     return () => unsubscribe();
   }, []);
-
-  
 
   // --- Session Restore ---
   useEffect(() => {
@@ -921,7 +920,7 @@ export default function NeonDraftGame() {
           localStorage.removeItem("neondraft_roomId");
           setError("Server shut down by Admin.");
         }
-      }
+      },
     );
     return () => unsub();
   }, [roomId, user, gameState?.feedbackTrigger?.id]);
@@ -960,7 +959,7 @@ export default function NeonDraftGame() {
     try {
       await setDoc(
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", newId),
-        initialData
+        initialData,
       );
       localStorage.setItem("neondraft_roomId", newId);
       setRoomId(newId);
@@ -983,7 +982,7 @@ export default function NeonDraftGame() {
         "public",
         "data",
         "rooms",
-        roomCodeInput
+        roomCodeInput,
       );
       const snap = await getDoc(ref);
       if (!snap.exists()) throw new Error("Room not found.");
@@ -1034,23 +1033,38 @@ export default function NeonDraftGame() {
   const kickPlayer = async (playerIdToRemove) => {
     if (gameState.hostId !== user.uid) return;
     const newPlayers = gameState.players.filter(
-      (p) => p.id !== playerIdToRemove
+      (p) => p.id !== playerIdToRemove,
     );
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-      { players: newPlayers }
+      { players: newPlayers },
     );
   };
 
   const toggleReady = async () => {
     if (!gameState) return;
     const updatedPlayers = gameState.players.map((p) =>
-      p.id === user.uid ? { ...p, ready: !p.ready } : p
+      p.id === user.uid ? { ...p, ready: !p.ready } : p,
     );
     await updateDoc(
       doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
-      { players: updatedPlayers }
+      { players: updatedPlayers },
     );
+  };
+
+  const copyToClipboard = () => {
+    try {
+      navigator.clipboard.writeText(roomId);
+      triggerFeedback("neutral", "COPIED!", "", CheckCircle);
+    } catch (e) {
+      const el = document.createElement("textarea");
+      el.value = roomId;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      triggerFeedback("neutral", "COPIED!", "", CheckCircle);
+    }
   };
 
   // --- Logic ---
@@ -1064,10 +1078,10 @@ export default function NeonDraftGame() {
       gameState.players.length === 2
         ? 10
         : gameState.players.length === 3
-        ? 9
-        : gameState.players.length === 4
-        ? 8
-        : 7;
+          ? 9
+          : gameState.players.length === 4
+            ? 8
+            : 7;
 
     const players = gameState.players.map((p) => {
       const hand = [];
@@ -1099,7 +1113,7 @@ export default function NeonDraftGame() {
             type: "neutral",
           },
         ],
-      }
+      },
     );
   };
 
@@ -1131,7 +1145,7 @@ export default function NeonDraftGame() {
             selection: selectedCardIndices,
             usingProxy: isUsingProxy,
           }
-        : p
+        : p,
     );
 
     const allSelected = updatedPlayers.every((p) => p.selection.length > 0);
@@ -1143,7 +1157,7 @@ export default function NeonDraftGame() {
         doc(db, "artifacts", APP_ID, "public", "data", "rooms", roomId),
         {
           players: updatedPlayers,
-        }
+        },
       );
     }
     setSelectedCardIndices([]);
@@ -1234,7 +1248,7 @@ export default function NeonDraftGame() {
 
     // 2. Rotate Hands
     const rotatedHands = finalPlayers.map(
-      (_, i) => finalPlayers[(i + 1) % finalPlayers.length].hand
+      (_, i) => finalPlayers[(i + 1) % finalPlayers.length].hand,
     );
     finalPlayers.forEach((p, i) => (p.hand = rotatedHands[i]));
 
@@ -1253,7 +1267,7 @@ export default function NeonDraftGame() {
 
       // --- ROUND SCORING ---
       const breakdowns = finalPlayers.map((p) =>
-        calculateScoreBreakdown(p.keptCards)
+        calculateScoreBreakdown(p.keptCards),
       );
 
       // Botnet (Maki) Scoring
@@ -1266,11 +1280,12 @@ export default function NeonDraftGame() {
 
       const firstPlaceWinners = finalPlayers.filter(
         (_, i) =>
-          breakdowns[i].botnetCount === firstPlaceCount && firstPlaceCount > 0
+          breakdowns[i].botnetCount === firstPlaceCount && firstPlaceCount > 0,
       );
       const secondPlaceWinners = finalPlayers.filter(
         (_, i) =>
-          breakdowns[i].botnetCount === secondPlaceCount && secondPlaceCount > 0
+          breakdowns[i].botnetCount === secondPlaceCount &&
+          secondPlaceCount > 0,
       );
 
       const firstPoints = Math.floor(6 / (firstPlaceWinners.length || 1));
@@ -1292,7 +1307,7 @@ export default function NeonDraftGame() {
 
         // Handle Backdoors (Puddings) - Move to persistent storage
         const roundBackdoors = p.keptCards.filter(
-          (c) => c === "BACKDOOR"
+          (c) => c === "BACKDOOR",
         ).length;
         p.backdoorCount += roundBackdoors;
 
@@ -1316,7 +1331,7 @@ export default function NeonDraftGame() {
         players: finalPlayers,
         turnState: nextState,
         logs: arrayUnion(...logs),
-      }
+      },
     );
   };
 
@@ -1363,7 +1378,7 @@ export default function NeonDraftGame() {
             message: "SYSTEM HACKED",
             subtext: `${winner} Dominates the Grid`,
           },
-        }
+        },
       );
     } else {
       // Deal Next Round
@@ -1373,10 +1388,10 @@ export default function NeonDraftGame() {
         gameState.players.length === 2
           ? 10
           : gameState.players.length === 3
-          ? 9
-          : gameState.players.length === 4
-          ? 8
-          : 7;
+            ? 9
+            : gameState.players.length === 4
+              ? 8
+              : 7;
 
       const players = gameState.players.map((p) => {
         const newHand = [];
@@ -1402,7 +1417,7 @@ export default function NeonDraftGame() {
             message: `ROUND ${nextRound}`,
             subtext: "New Data Available",
           },
-        }
+        },
       );
     }
   };
@@ -1427,7 +1442,7 @@ export default function NeonDraftGame() {
         round: 1,
         winner: null,
         feedbackTrigger: null,
-      }
+      },
     );
   };
 
@@ -1541,9 +1556,19 @@ export default function NeonDraftGame() {
 
         <div className="z-10 w-full max-w-lg bg-slate-900/90 backdrop-blur p-8 rounded-2xl border border-cyan-900/50 shadow-2xl mb-4">
           <div className="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
-            <h2 className="text-2xl font-serif text-cyan-400">
-              Node: <span className="text-white font-mono">{roomId}</span>
-            </h2>
+            {/* Grouping Title and Copy Button together on the left */}
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-serif text-cyan-400">
+                Node: <span className="text-white font-mono">{roomId}</span>
+              </h2>
+              <button
+                onClick={copyToClipboard}
+                className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
+                title="Copy Room ID"
+              >
+                <Copy size={16} />
+              </button>
+            </div>
             <button
               onClick={() => setShowLeaveConfirm(true)}
               className="p-2 bg-red-900/30 hover:bg-red-900/50 rounded text-red-300"
@@ -1862,8 +1887,8 @@ export default function NeonDraftGame() {
                                   bdBonus > 0
                                     ? "text-green-400"
                                     : bdBonus < 0
-                                    ? "text-red-400"
-                                    : "text-slate-600"
+                                      ? "text-red-400"
+                                      : "text-slate-600"
                                 }`}
                               >
                                 {bdBonus > 0 ? "+" : ""}
@@ -2019,15 +2044,15 @@ export default function NeonDraftGame() {
                           waitingForOthers
                             ? "bg-slate-800 text-cyan-400/50 cursor-wait border border-slate-700"
                             : selectedCardIndices.length > 0
-                            ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/50"
-                            : "bg-slate-800 text-slate-500 cursor-not-allowed"
+                              ? "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-900/50"
+                              : "bg-slate-800 text-slate-500 cursor-not-allowed"
                         }`}
                 >
                   {waitingForOthers
                     ? "Waiting for other runners..."
                     : isUsingProxy && selectedCardIndices.length < 2
-                    ? "Select 2nd Fragment..."
-                    : "ACQUIRE DATA"}
+                      ? "Select 2nd Fragment..."
+                      : "ACQUIRE DATA"}
                 </button>
               </>
             )}
