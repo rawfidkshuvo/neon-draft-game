@@ -134,14 +134,32 @@ const CARDS = {
     border: "border-blue-500",
     desc: "1/3/6/10/15 TB.",
   },
-  BOTNET: {
-    id: "BOTNET",
-    name: "Botnet Node",
-    val: 0,
+  BOTNET_1: {
+    id: "BOTNET_1",
+    name: "Botnet Node v1",
+    val: 1,
     icon: Wifi,
-    color: "text-red-500",
-    border: "border-red-600",
-    desc: "Most = 6. 2nd = 3.",
+    color: "text-red-100", // Pale Red
+    border: "border-red-200",
+    desc: "Str 1. Most Str = 6pts.",
+  },
+  BOTNET_2: {
+    id: "BOTNET_2",
+    name: "Botnet Node v2",
+    val: 2,
+    icon: Wifi,
+    color: "text-red-400", // Strong, Pure Red
+    border: "border-red-500",
+    desc: "Str 2. Most Str = 6pts.",
+  },
+  BOTNET_3: {
+    id: "BOTNET_3",
+    name: "Botnet Node v3",
+    val: 3,
+    icon: Wifi,
+    color: "text-red-600", // Neon Fuchsia (Distinct from Red)
+    border: "border-red-700",
+    desc: "Str 3. Most Str = 6pts.",
   },
   PROXY: {
     id: "PROXY",
@@ -168,7 +186,9 @@ const DECK_TEMPLATE = [
   ...Array(14).fill("GPU"),
   ...Array(14).fill("MAINFRAME"),
   ...Array(14).fill("KEY"),
-  ...Array(26).fill("BOTNET"),
+  ...Array(12).fill("BOTNET_1"), // 12 Cards
+  ...Array(8).fill("BOTNET_2"), // 8 Cards
+  ...Array(6).fill("BOTNET_3"), // 6 Cards
   ...Array(10).fill("CACHE_2"),
   ...Array(5).fill("CACHE_3"),
   ...Array(5).fill("CACHE_1"),
@@ -685,7 +705,9 @@ const RulesModal = ({ onClose }) => (
                 <Wifi size={16} className="text-red-500" />
               </div>
               <div className="text-xs text-slate-400">
-                Competitive scoring per round.
+                Collect strictly for strength. <br />
+                Values: 1, 2, or 3. <br />
+                <span className="text-red-400">Total Strength</span> wins.
               </div>
               <div className="flex gap-2 text-xs text-center font-mono mt-auto">
                 <div className="bg-black/40 p-2 rounded flex-1">
@@ -1184,26 +1206,27 @@ export default function NeonDraftGame() {
   };
 
   // --- SCORING ENGINE ---
+  // --- SCORING ENGINE ---
   const calculateScoreBreakdown = (keptCards) => {
     let cacheScore = 0;
-    let exploitStack = 0; // Tracks active "open" exploits
+    let exploitStack = 0;
     let gpuCount = 0;
     let mainframeCount = 0;
     let keyCount = 0;
-    let botnetCount = 0;
+    let botnetCount = 0; // This will now represent Total Strength, not number of cards
 
-    // Iterate sequentially to handle Exploit -> Cache logic
+    // Iterate sequentially
     keptCards.forEach((cId) => {
-      // 1. Exploit / Cache Logic (Sequential)
+      // 1. Exploit / Cache Logic
       if (cId === "EXPLOIT") {
         exploitStack++;
       } else if (cId.startsWith("CACHE")) {
         const val = CARDS[cId].val;
         if (exploitStack > 0) {
-          cacheScore += val * 3; // Tripled!
-          exploitStack--; // Consumed
+          cacheScore += val * 3;
+          exploitStack--;
         } else {
-          cacheScore += val; // Normal
+          cacheScore += val;
         }
       }
 
@@ -1211,7 +1234,13 @@ export default function NeonDraftGame() {
       if (cId === "GPU") gpuCount++;
       if (cId === "MAINFRAME") mainframeCount++;
       if (cId === "KEY") keyCount++;
-      if (cId === "BOTNET") botnetCount++;
+
+      // --- UPDATED BOTNET LOGIC ---
+      if (cId.startsWith("BOTNET")) {
+        // Add the val (1, 2, or 3) to the score counter
+        botnetCount += CARDS[cId].val;
+      }
+      // ----------------------------
     });
 
     const gpuScore = Math.floor(gpuCount / 2) * 5;
@@ -1221,7 +1250,7 @@ export default function NeonDraftGame() {
 
     return {
       total: cacheScore + gpuScore + mainframeScore + keyScore,
-      botnetCount,
+      botnetCount, // This is now the "Strength" sum used for comparison
     };
   };
 
@@ -1490,7 +1519,7 @@ export default function NeonDraftGame() {
         </div>
       </div>
     );
-  }  
+  }
 
   if (view === "menu") {
     return (
